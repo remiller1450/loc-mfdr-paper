@@ -264,6 +264,83 @@ locmfdr.new <- function(fit, lambda, X = NULL, y = NULL, number = NULL, alpha = 
 }
 
 
+
+## Case Study mfdr function
+#### DATA MUST BE STANDARDIZED BEFORE MODEL FITTING WITH THIS FUCTION
+case.locmfdr <- function(fit, lambda){
+  ### Setup
+  X <- fit$X
+  y <- fit$y
+  n <- nrow(X)
+  p <- ncol(X)
+  S <- predict(fit, type = "nvars")
+  step <- which(fit$lambda == lambda)
+  pen.idx <- fit$penalty.factor > 0
+  
+  ### Linear regression
+  if(class(fit)[1] == "ncvreg"){
+    if(fit$family == "gaussian"){
+      ### Calculate z_j
+      R <- y - predict(fit, X, lambda = lambda, type = "response")
+      z <- (1/n)*t(X) %*% R + fit$beta[-1,step]
+      sig.est <- sqrt(fit$loss[step]/(n - S[step] + 1))
+      z <- z/(sig.est/sqrt(n))
+      
+    }
+    
+    ### Logistic regression 
+    else if (fit$family == "binomial"){
+      P <-  predict(fit, X, lambda = lambda, type = 'response')
+      U <- y - P   ### Calculating the score
+      W <- diag(as.vector(P*(1 - P)))  
+      
+      ### Calculate zj
+      z <- rep(NA, p)
+      for (j in 1:p){
+        vj <- t(X[,j]) %*% W %*% X[,j]
+        z[j] <- (X[,j] %*% U + vj * fit$beta[(j+1),step])/(sqrt(vj))  ### j+1 bc intercept
+      }
+      
+    }
+  }
+  
+  ### Cox regression
+  if(class(fit)[1] == "ncvsurv"){
+    d <- fit$fail
+    rsk <- rev(cumsum(rev(exp(fit$Eta[,step]))))
+    P <- outer(exp(fit$Eta[,step]), rsk, '/')
+    P[upper.tri(P)] <- 0
+    U <- d - P%*%d  
+    
+    ### Calculate W (maybe diag for speed?)
+    W <- -P %*% diag(d) %*% t(P)
+    #W <- matrix(0, n,n)
+    diag(W) <- diag(P %*% diag(d) %*% t(1-P))
+    
+    ### Calculate v_j and then z_j
+    z <- rep(NA, p)
+    for (j in 1:p){
+      vj <- t(X[,j]) %*% W %*% X[,j]
+      z[j] <- (X[,j] %*% U + vj * fit$beta[j,step])/(sqrt(vj))
+    }
+    
+  }
+  
+  ### Calculate locfdr
+  
+  f <- density(z[pen.idx])
+  ff <- approxfun(f$x, f$y)
+  est.gam1 <- pmin(dnorm(z, 0, 1)/ff(z), 1)
+  est.gam1[!pen.idx] <- NA
+  
+  
+  results <- data.frame(z = z, locfdr_def = est.gam1)
+  #return(list(results, f, aa, bkde.xy)) ### Use to generate comparison plots
+  return(results)
+}
+
+
+
 ## Color palatte used for the figures
 pal <- function(n, alpha=1) {
   if (n==2) {

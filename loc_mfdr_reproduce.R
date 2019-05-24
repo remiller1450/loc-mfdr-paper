@@ -1,4 +1,4 @@
-#######################################################################################
+####################################################################################################
 #
 #                                                                                     
 #   Filename    :	loc_mfdr_reproduce.R										  
@@ -6,20 +6,13 @@
 #   Output data files :    fig1.pdf, fig2.pdf, fig3.pdf, fig4.pdf, table1.pdf, 
 #			                     table2.pdf, table3.pdf, table4.pdf 
 #
-#   Required R packages :  Matrix, ncvreg, survival, ggplot2, covTest, 
-#			   SelectiveInference, gridExtra, GEOQuery
+#   Required R packages :  ggplot2, ncvreg, Matrix, survival, covTest, selectiveInference
+#                          Rccp, gridExtra, locfdr, grid, reshape2, hdi, knockoff
 #
 #
-########################################################################################
+####################################################################################################
 
 
-
-#install.packages("ncvreg")
-#install.packages('covTest')
-#install.packages('selectiveInference')
-#install.packages('gridExtra')
-#install.packages('ggplot2')
-#install.packages('Rccp')
 library(ggplot2)
 library(ncvreg)
 library(Matrix)
@@ -34,10 +27,10 @@ library(reshape2)
 library(hdi)
 library(knockoff)
 
-## Sets working directory to current location of this folder
+## Sets the working directory to current location of this folder
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-## Sources functions used in simulations and the construction of figures
+## Sources functions used in the simulations and the construction of figures
 source("functions.R")
 
 
@@ -1135,7 +1128,6 @@ save(final.true, final.false, t, fdr.true, fdr.true.cv,  true.cv, false.cv, p,
 
 
 ### Assumptions Violated
-
 ### Setup
 n <- 200
 p <- 600
@@ -1314,7 +1306,7 @@ save(id.A, id.B, id.C, final.true, final.cor, final.false, fdr.true, fdr.true.cv
 ########################################################################################
 
 
-load(file = "simres\model_easy.RData")
+load(file = "simres/model_easy.RData")
 p <- ncol(fdr.true)
 
 selinf.A <- apply(final.true, 2, mean)
@@ -1352,5 +1344,144 @@ colnames(RR2) <- c("loc-mfdr", colnames(RR2)[-1])
 
 pdf("Table2.pdf", height=7, width=8.5)
 grid.table(round(t(rbind(RR, RR2)), 2))
+dev.off()
+
+
+########################################################################################
+#
+#        Code used to produce case study results (Table 3, Figure 4, Table 4)
+#
+########################################################################################
+
+
+### Case study #1 (table 3, figure 4)
+
+## Load Shedden dataset
+load("case_study_data/Shedden2008.RData")
+
+### Set up model matrix
+XX <- std(X)
+ZZ <- model.matrix(~ factor(Sex) + factor(Race) + factor(AdjChemo) + factor(SmHist) + factor(Margin) + factor(Grade), Z)
+w <- rep(0:1, c(ncol(ZZ)-1, ncol(X))) ## Don't the penalize clinical covariates
+fit2 <- ncvsurv(cbind(std(ZZ[,-1]), XX), S, penalty = 'lasso', returnX = TRUE, penalty.factor = w)
+
+### local mfdr at MFdr lambda
+step <- max(which(mfdr(fit2)$mFDR < .1))
+shedden.locfdr <- case.locmfdr(fit2, fit2$lambda[step])
+
+id <- order(shedden.locfdr[,2])[1:10] - 17  ## Subtract 17 because of 17 unpenalized vars
+mfdr.output <- data.frame(name = colnames(X[,id]),
+                          z = shedden.locfdr[order(shedden.locfdr[,2]),][1:10,1],
+                          fdr = shedden.locfdr[order(shedden.locfdr[,2]),][1:10,2])
+
+
+## local mfdr at CV lambda
+set.seed(12345)
+cv.fit2 <- cv.ncvsurv(cbind(std(ZZ[,-1]), XX), S, penalty = 'lasso', penalty.factor = w)
+cv.lambda <- cv.fit2$lambda.min
+
+shedden.locfdr2 <- case.locmfdr(fit2, cv.lambda)
+
+idd <- order(shedden.locfdr2[,2])[1:10] - 17  ## Subtract 17 because of 17 unpenalized vars
+cv.output <- data.frame(name = colnames(X[,idd]),
+                        z = shedden.locfdr2[order(shedden.locfdr2[,2]),][1:10,1],
+                        fdr = shedden.locfdr2[order(shedden.locfdr2[,2]),][1:10,2])
+
+
+#### Univariate locfdr (for comparison)
+zstat <- rep(NA, ncol(XX))
+for (j in 1:ncol(XX)){
+  fit.uni <- coxph(S ~ XX[,j] + ZZ[,-1])
+  zstat[j] <- summary(fit.uni)$coefficients[1,4]
+}
+univariate.res <- locfdr(zstat, nulltype = 0, plot = 0)
+
+uni.output <- data.frame(name = colnames(X[,order(univariate.res$fdr)[1:10]]),
+                         z = zstat[order(univariate.res$fdr)][1:10],
+                         fdr = univariate.res$fdr[order(univariate.res$fdr)][1:10])
+
+#############
+### Table 3
+#############
+
+u.names <- fData[row.names(fData) %in% uni.output$name,]
+u.names2 <- u.names[match(uni.output$name, rownames(u.names)),1]
+
+mf.names <- fData[row.names(fData) %in% mfdr.output$name,]
+mf.names2 <- mf.names[match(mfdr.output$name, rownames(mf.names)),1]
+
+cv.names <- fData[row.names(fData) %in% cv.output$name,]
+cv.names2 <- cv.names[match(cv.output$name, rownames(cv.names)),1]
+
+## note: the <NA> names are missing in the fData file, they are replaced 
+## with the probe_id in the table appearing in the manuscript
+
+pdf("Table3.pdf", height=7, width=8.5)
+grid.table((data.frame(feature.uni = u.names2, fdr.uni = uni.output$fdr,
+                       feature.mfdr = mf.names2, mfdr.mfdr = mfdr.output$fdr,
+                       feature.cv = cv.names2, mfdr.cv = cv.output$fdr)))
+dev.off()
+
+
+
+#############
+### Figure 4
+#############
+
+pdf("Fig4.pdf", height=4, width=5.5)
+plot(density(shedden.locfdr2$z), lwd = 2, col = 2, xlab = "z", main = "Density Comparisons")
+lines(seq(-5,5,by = .01), dnorm(seq(-5,5,by = .01)), col = 1, lwd = 2, lty = 2)
+lines(density(shedden.locfdr$z), lwd = 2, col = 3)
+lines(density(zstat), lwd = 2, col = 4)
+legend("topright", legend = c("lasso (CV)", "lasso (mfdr)", "Univariate", "Theoretical Null"), col = c(2,3,4,1), lty = c(1,1,1,2), lwd = 2)
+dev.off()
+
+
+
+
+### Case study #2 (table 4)
+
+## Load TCGA BRCA1 dataset
+TCGA <- readRDS("case_study_data//bcTCGA.rds")
+
+## Standardize and fit penalized regression models
+X <- TCGA$X
+XX <- std(X)
+y <- TCGA$y
+fit <- ncvreg(XX, y, penalty = "lasso", returnX = TRUE)
+cv.fit <- cv.ncvreg(XX, y, penalty = "lasso")
+step <- max(which(mfdr(fit)[,3] < .1))
+
+### local mfdr at two different lambda values
+lassofdr.res1 <- locmfdr(fit, fit$lambda[step])
+lassofdr.res2 <- locmfdr(fit, cv.fit$lambda.min)
+
+### Univariate testing
+tstat <- numeric(ncol(X))
+for (j in 1:ncol(X)){
+  fit.lm <- lm(y ~ X[,j])
+  tstat[j] <- summary(fit.lm)$coefficients[2,3]
+}
+zstat <- qnorm(pt(tstat,n - 2))
+zstat[is.infinite(zstat)] <- tstat[is.infinite(zstat)] ## Make infinite z-stats into their pre-transformed t-stat
+
+univariate.res <- locfdr(zstat, nulltype = 0, plot = 0)
+
+id <- order(univariate.res$fdr)[1:10]  ## Top 10 univariate selections
+uni.output <- data.frame(name = colnames(X[,order(univariate.res$fdr)[1:10]]),
+                         z = zstat[order(univariate.res$fdr)][1:10],
+                         fdr = univariate.res$fdr[order(univariate.res$fdr)][1:10])
+
+
+#############
+### Table 4
+#############
+
+# Note: Chromosome locations are not contained in these data and were manually added to the table appearing in the manuscript
+
+pdf("Table4.pdf", height=7, width=8.5)
+grid.table((data.frame(Gene = uni.output$name, uni_loc = uni.output$fdr,
+                       mfdr_locmfdr = lassofdr.res1[id,2],
+                       cv_locmfdr= lassofdr.res1[id,2])))
 dev.off()
 
