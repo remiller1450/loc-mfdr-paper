@@ -937,10 +937,16 @@ names(res.cox.cv) <- levels(bins)
 res.cox.uni <- colSums(false3)/(colSums(trueA3) + colSums(trueB3) + colSums(false3))
 names(res.cox.uni) <- levels(bins)
 
+ttab1 <- round(rbind(res.lin.uni, res.lin.mfdr, res.lin.cv,
+                     res.log.uni, res.log.mfdr, res.log.cv,
+                     res.cox.uni, res.cox.mfdr, res.cox.cv), 2)
+
+rownames(ttab1) <- c("Linear-Univariate", "Linear-mFDR-lam", "Linear-CV-lam",
+                     "Logistic-Univariate", "Logistic-mFDR-lam", "Logistic-CV-lam",
+                     "Cox-Univariate", "Cox-mFDR-lam", "Cox-CV-lam")
+
 pdf("Table1.pdf", height=7, width=8.5)
-grid.table(round(rbind(res.lin.uni, res.lin.mfdr, res.lin.cv,
-                       res.log.uni, res.log.mfdr, res.log.cv,
-                       res.cox.uni, res.cox.mfdr, res.cox.cv), 2))
+grid.table(ttab1)
 dev.off()
 
 
@@ -1311,16 +1317,19 @@ p <- ncol(fdr.true)
 
 selinf.A <- apply(final.true, 2, mean)
 final.false[is.na(final.false)] <- 0  ### Fdr of 0/0 is defined as 0
-selinf.C <- apply(final.false, 2, mean)
+selinf.nC <- apply(final.false, 2, mean)
+selinf.C <- colSums(final.false)/(colSums(final.true) + colSums(final.false))
 
 locmfdr.A <- sum(colMeans(fdr.true[,1:t] < .10))
+locmfdr.nC <- sum(colMeans(fdr.true[,(t+1):p] < .10))
 locmfdr.C <- sum(colSums(fdr.true[,(t+1):p] < .10))/sum(colSums(fdr.true < .10))
 
-RR <- data.frame(rbind(c(locmfdr.A,selinf.A),
+RR <- data.frame(rbind(c(locmfdr.A, selinf.A),
                        NA,
-                       c(locmfdr.C,selinf.C)))
+                       c(locmfdr.nC, selinf.nC),
+                       c(locmfdr.C, selinf.C)))
 
-rownames(RR) <- c("Avg 'A'", "NA", "Avg FDR")
+rownames(RR) <- c("Avg 'A'", "Avg 'B'", "Avg C", "Avg FDR")
 colnames(RR) <- c("loc-mfdr", colnames(RR)[-1])
 
 
@@ -1329,21 +1338,24 @@ load(file = "simres/model_hard.RData")
 selinf.A <- apply(final.true, 2, mean)
 selinf.B <- apply(final.cor, 2, mean)
 final.false[is.na(final.false)] <- 0 ### Fdr of 0/0 is defined as 0
-selinf.C <- apply(final.false, 2, mean)
+selinf.nC <- apply(final.false, 2, mean)
+selinf.C <- colSums(final.false)/(colSums(final.true) + colSums(final.false))
 
 locmfdr.A <- sum(colMeans(fdr.true[,id.A] < .10))
 locmfdr.B <- sum(colMeans(fdr.true[,id.B] < .10))
+locmfdr.nC <- sum(colMeans(fdr.true[,id.C] < .10))
 locmfdr.C <- sum(colSums(fdr.true[,id.C] < .10))/sum(colSums(fdr.true < .10))
 
 RR2 <- data.frame(rbind(c(locmfdr.A,selinf.A),
                         c(locmfdr.B,selinf.B),
+                        c(locmfdr.nC,selinf.nC),
                         c(locmfdr.C,selinf.C)))
 
-rownames(RR2) <- c("Avg 'A'", "Avg 'B'", "Avg FDR")
+rownames(RR2) <- c("Avg 'A'", "Avg 'B'", "Avg C", "Avg FDR")
 colnames(RR2) <- c("loc-mfdr", colnames(RR2)[-1])
 
 pdf("Table2.pdf", height=7, width=8.5)
-grid.table(round(t(rbind(RR, RR2)), 2))
+grid.table(round(t(rbind(RR2, RR)), 2))
 dev.off()
 
 
