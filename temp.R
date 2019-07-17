@@ -198,7 +198,7 @@ mylegend<-g_legend(p1)
 
 
 ## Assemble the 4 plots into a single figure and store as pdf
-pdf("Fig1.pdf", height=7, width=8.5)
+pdf("figures_tables/Fig1.pdf", height=7, width=8.5)
 grid.arrange(arrangeGrob(p4 + theme(legend.position="none"),
                          p3 + theme(legend.position="none"),
                          p2 + theme(legend.position="none"),
@@ -305,7 +305,7 @@ n <- 200
 p <- 600
 t <- 60
 bb <- numeric(60)
-bb[(0:5)*10+1] <- c(.8, -.8, .7, -.7, .6, -.6)  #### 6 true variables (type A)
+bb[(0:5)*10+1] <- c(.6, -.6, .5, -.5, .4, -.4)  #### 6 true variables (type A)
 
 ## Ids of var types
 id.A <- which(bb != 0)
@@ -386,7 +386,7 @@ set.seed(12345)
 n <- 1000
 p <- 600
 t <- 60
-beta <- c(rep(.10,t/2), rep(-.10,t/2), rep(0,p-t))
+beta <- c(rep(.15,t/2), rep(-.15,t/2), rep(0,p-t))
 
 ### Variable IDs for sim type
 id.A <- which(beta != 0)
@@ -457,7 +457,7 @@ set.seed(12345)
 n <- 200
 p <- 600
 bb <- numeric(60)
-bb[(0:5)*10+1] <- c(1.2,-1.2,1,-1,.8,-.8)  #### 6 true variables (type A)
+bb[(0:5)*10+1] <- c(1.1,-1.1,1,-1,.9,-.9)  #### 6 true variables (type A)
 
 ## Ids of var types
 id.A <- which(bb != 0)
@@ -717,7 +717,7 @@ l.mfdr <- with(df.mfdr, loess(Noise ~ Estimate, span = .15))
 yy.mfdr <- predict(l.mfdr, newdata = xx)
 smooth.mfdr <- data.frame(xx = xx, yy = yy.mfdr)
 
-l.uni <- with(df.uni, loess(Noise ~ Estimate, span = .15))
+l.uni <- with(df.uni, loess(Noise ~ Estimate, span = .55))
 yy.uni <- predict(l.uni, newdata = xx)
 smooth.uni <- data.frame(xx = xx, yy = yy.uni)
 
@@ -793,7 +793,7 @@ l.mfdr <- with(df.mfdr, loess(Noise ~ Estimate, span = .15))
 yy.mfdr <- predict(l.mfdr, newdata = xx)
 smooth.mfdr <- data.frame(xx = xx, yy = yy.mfdr)
 
-l.uni <- with(df.uni, loess(Noise ~ Estimate, span = .15))
+l.uni <- with(df.uni, loess(Noise ~ Estimate, span = .45))
 yy.uni <- predict(l.uni, newdata = xx)
 smooth.uni <- data.frame(xx = xx, yy = yy.uni)
 
@@ -813,24 +813,24 @@ p.uniash2 <- ggplot(df.uniash[sample.id,]) + geom_jitter(aes(x = Estimate, y = N
 
 
 ## Add loess curves from full sim results
-p.cv2 <- p.cv2 + geom_path(data = smooth.cv, x = xx, y = yy) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
+p.cv2 <- p.cv2 + geom_path(data = smooth.cv, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
   labs(title = "mfdr (lambda CV) - Met")
 
-p.cv1se2 <- p.cv1se2 + geom_path(data = smooth.cv1se, x = xx, y = yy) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
+p.cv1se2 <- p.cv1se2 + geom_path(data = smooth.cv1se, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
   labs(title = "mfdr (lambda CV-1se) - Met")
 
-p.mfdr2 <- p.mfdr2 + geom_path(data = smooth.mfdr, x = xx, y = yy) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
+p.mfdr2 <- p.mfdr2 + geom_path(data = smooth.mfdr, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
   labs(title = "mfdr (lambda 10% mFDR) - Met")
 
-p.uni2 <- p.uni2 + geom_path(data = smooth.uni, x = xx, y = yy) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
+p.uni2 <- p.uni2 + geom_path(data = smooth.uni, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
   labs(title = "fdr (locfdr) - Met")
 
-p.uniash2 <- p.uniash2 + geom_path(data = smooth.uniash, x = xx, y = yy) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
+p.uniash2 <- p.uniash2 + geom_path(data = smooth.uniash, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
   labs(title = "fdr (ashr) - Met")
 
 
 ### Generate and save Figure2 as a pdf
-pdf("Fig2.pdf", height=6, width=8)
+pdf("figures_tables/Fig2.pdf", height=7, width=10)
 grid.arrange(p.cv, p.cv1se, p.mfdr, p.uni, p.uniash, 
              p.cv2, p.cv1se2, p.mfdr2, p.uni2, p.uniash2, nrow = 2)
 dev.off()
@@ -842,44 +842,146 @@ dev.off()
 #
 ########################################################################################
 
+
+####### Row 1, linear assumptions violated
 load(file = "simres/linear_hard.RData")
-#### If only C are false discoveries
-res.lin.mfdr <- colSums(false)/(colSums(trueA) + colSums(trueB) + colSums(false))
-names(res.lin.mfdr) <- levels(bins)
-res.lin.cv <- colSums(false2)/(colSums(trueA2) + colSums(trueB2) + colSums(false2))
-names(res.lin.cv) <- levels(bins)
-res.lin.uni <- colSums(false3)/(colSums(trueA3) + colSums(trueB3) + colSums(false3))
-names(res.lin.uni) <- levels(bins)
 
+## Setup results data.frames
+df.cv <- data.frame(Estimate = cut(c(as.vector(res.lassocv[1:60,]), as.vector(res.lassocv[61:600,])),
+                                   breaks = c(0,.2,.4,.6,.8,1)),
+                    Noise = c(rep(0, 60*ncol(res.lassocv)),
+                              rep(1, 540*ncol(res.lassocv))))            
 
+df.cv1se <- data.frame(Estimate = cut(c(as.vector(res.lassocv1se[1:60,]), as.vector(res.lassocv1se[61:600,])),
+                                      breaks = c(0,.2,.4,.6,.8,1)),
+                       Noise = c(rep(0, 60*ncol(res.lassocv1se)),
+                                 rep(1, 540*ncol(res.lassocv1se))))     
+
+df.mfdr <- data.frame(Estimate = cut(c(as.vector(res.lassomfdr[1:60,]), as.vector(res.lassomfdr[61:600,])),
+                                     breaks = c(0,.2,.4,.6,.8,1.1)),
+                      Noise = c(rep(0, 60*ncol(res.lassomfdr)),
+                                rep(1, 540*ncol(res.lassomfdr))))    
+
+df.uni <-  data.frame(Estimate = cut(c(as.vector(res.uni[1:60,]), as.vector(res.uni[61:600,])),
+                                     breaks = c(0,.2,.4,.6,.8,1)),
+                      Noise = c(rep(0, 60*ncol(res.uni)),
+                                rep(1, 540*ncol(res.uni))))     
+
+df.uniash <-  data.frame(Estimate = cut(c(as.vector(res.uniash[1:60,]), as.vector(res.uniash[61:600,])),
+                                        breaks = c(0,.2,.4,.6,.8,1)),
+                         Noise = c(rep(0, 60*ncol(res.uniash)),
+                                   rep(1, 540*ncol(res.uniash))))     
+
+props.cv <- df.cv %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.cv1se <- df.cv1se %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.mfdr <- df.mfdr %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.uni <- df.uni %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.uniash <- df.uniash %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+
+tab.res <- data.frame(cv = props.cv$prop_noise,
+                      cv1se = props.cv1se$prop_noise,
+                      mfdr = props.mfdr$prop_noise,
+                      uni = props.uni$prop_noise,
+                      uniash = props.uniash$prop_noise)
+
+rownames(tab.res) <- levels(props.cv$Estimate)
+lin_hard_tab <- round(t(tab.res),3)
+rownames(lin_hard_tab) <- paste("Linear", rownames(lin_hard_tab))
+
+#### Row 2, logistic
 load(file = "simres/logistic_hard.RData")
-#### If only C are false discoveries
-res.log.mfdr <- colSums(false)/(colSums(trueA) + colSums(trueB) + colSums(false))
-names(res.log.mfdr) <- levels(bins)
-res.log.cv <- colSums(false2)/(colSums(trueA2) + colSums(trueB2) + colSums(false2))
-names(res.log.cv) <- levels(bins)
-res.log.uni <- colSums(false3)/(colSums(trueA3) + colSums(trueB3) + colSums(false3))
-names(res.log.uni) <- levels(bins)
+
+## Setup results data.frames
+df.cv <- data.frame(Estimate = cut(c(as.vector(res.lassocv[1:60,]), as.vector(res.lassocv[61:600,])),
+                                   breaks = c(0,.2,.4,.6,.8,1)),
+                    Noise = c(rep(0, 60*ncol(res.lassocv)),
+                              rep(1, 540*ncol(res.lassocv))))            
+
+df.cv1se <- data.frame(Estimate = cut(c(as.vector(res.lassocv1se[1:60,]), as.vector(res.lassocv1se[61:600,])),
+                                      breaks = c(0,.2,.4,.6,.8,1)),
+                       Noise = c(rep(0, 60*ncol(res.lassocv1se)),
+                                 rep(1, 540*ncol(res.lassocv1se))))     
+
+df.mfdr <- data.frame(Estimate = cut(c(as.vector(res.lassomfdr[1:60,]), as.vector(res.lassomfdr[61:600,])),
+                                     breaks = c(0,.2,.4,.6,.8,1.1)),
+                      Noise = c(rep(0, 60*ncol(res.lassomfdr)),
+                                rep(1, 540*ncol(res.lassomfdr))))    
+
+df.uni <-  data.frame(Estimate = cut(c(as.vector(res.uni[1:60,]), as.vector(res.uni[61:600,])),
+                                     breaks = c(0,.2,.4,.6,.8,1)),
+                      Noise = c(rep(0, 60*ncol(res.uni)),
+                                rep(1, 540*ncol(res.uni))))     
+
+df.uniash <-  data.frame(Estimate = cut(c(as.vector(res.uniash[1:60,]), as.vector(res.uniash[61:600,])),
+                                        breaks = c(0,.2,.4,.6,.8,1)),
+                         Noise = c(rep(0, 60*ncol(res.uniash)),
+                                   rep(1, 540*ncol(res.uniash))))     
+
+props.cv <- df.cv %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.cv1se <- df.cv1se %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.mfdr <- df.mfdr %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.uni <- df.uni %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.uniash <- df.uniash %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+
+tab.res <- data.frame(cv = props.cv$prop_noise,
+                      cv1se = props.cv1se$prop_noise,
+                      mfdr = props.mfdr$prop_noise,
+                      uni = props.uni$prop_noise,
+                      uniash = props.uniash$prop_noise)
+
+rownames(tab.res) <- levels(props.cv$Estimate)
+log_hard_tab <- round(t(tab.res),3)
+rownames(log_hard_tab) <- paste("Logistic", rownames(log_hard_tab))
 
 
+######## Row 3 - Cox 
 load(file = "simres/cox_hard.RData")
-#### If only C are false discoveries
-res.cox.mfdr <- colSums(false)/(colSums(trueA) + colSums(trueB) + colSums(false))
-names(res.cox.mfdr) <- levels(bins)
-res.cox.cv <- colSums(false2)/(colSums(trueA2) + colSums(trueB2) + colSums(false2))
-names(res.cox.cv) <- levels(bins)
-res.cox.uni <- colSums(false3)/(colSums(trueA3) + colSums(trueB3) + colSums(false3))
-names(res.cox.uni) <- levels(bins)
 
-ttab1 <- round(rbind(res.lin.uni, res.lin.mfdr, res.lin.cv,
-                     res.log.uni, res.log.mfdr, res.log.cv,
-                     res.cox.uni, res.cox.mfdr, res.cox.cv), 2)
+## Setup results data.frames
+df.cv <- data.frame(Estimate = cut(c(as.vector(res.lassocv[1:60,]), as.vector(res.lassocv[61:600,])),
+                                   breaks = c(0,.2,.4,.6,.8,1)),
+                    Noise = c(rep(0, 60*ncol(res.lassocv)),
+                              rep(1, 540*ncol(res.lassocv))))            
 
-rownames(ttab1) <- c("Linear-Univariate", "Linear-mFDR-lam", "Linear-CV-lam",
-                     "Logistic-Univariate", "Logistic-mFDR-lam", "Logistic-CV-lam",
-                     "Cox-Univariate", "Cox-mFDR-lam", "Cox-CV-lam")
+df.cv1se <- data.frame(Estimate = cut(c(as.vector(res.lassocv1se[1:60,]), as.vector(res.lassocv1se[61:600,])),
+                                      breaks = c(0,.2,.4,.6,.8,1)),
+                       Noise = c(rep(0, 60*ncol(res.lassocv1se)),
+                                 rep(1, 540*ncol(res.lassocv1se))))     
 
-pdf("Table1.pdf", height=7, width=8.5)
+df.mfdr <- data.frame(Estimate = cut(c(as.vector(res.lassomfdr[1:60,]), as.vector(res.lassomfdr[61:600,])),
+                                     breaks = c(0,.2,.4,.6,.8,1.1)),
+                      Noise = c(rep(0, 60*ncol(res.lassomfdr)),
+                                rep(1, 540*ncol(res.lassomfdr))))    
+
+df.uni <-  data.frame(Estimate = cut(c(as.vector(res.uni[1:60,]), as.vector(res.uni[61:600,])),
+                                     breaks = c(0,.2,.4,.6,.8,1)),
+                      Noise = c(rep(0, 60*ncol(res.uni)),
+                                rep(1, 540*ncol(res.uni))))     
+
+df.uniash <-  data.frame(Estimate = cut(c(as.vector(res.uniash[1:60,]), as.vector(res.uniash[61:600,])),
+                                        breaks = c(0,.2,.4,.6,.8,1)),
+                         Noise = c(rep(0, 60*ncol(res.uniash)),
+                                   rep(1, 540*ncol(res.uniash))))     
+
+props.cv <- df.cv %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.cv1se <- df.cv1se %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.mfdr <- df.mfdr %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.uni <- df.uni %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+props.uniash <- df.uniash %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
+
+tab.res <- data.frame(cv = props.cv$prop_noise,
+                      cv1se = as.numeric(props.cv1se$prop_noise),
+                      mfdr = props.mfdr$prop_noise,
+                      uni = props.uni$prop_noise,
+                      uniash = props.uniash$prop_noise)
+
+rownames(tab.res) <- levels(props.cv$Estimate)
+cox_hard_tab <- round(t(tab.res),3)
+rownames(cox_hard_tab) <- paste("Cox", rownames(cox_hard_tab))
+
+ttab1 <- rbind(lin_hard_tab, log_hard_tab, cox_hard_tab)
+
+pdf("figures_tables/Table1.pdf", height=7, width=8.5)
 grid.table(ttab1)
 dev.off()
 
@@ -891,32 +993,101 @@ dev.off()
 ########################################################################################
 
 load("simres/linear_hard.RData")
-results <- rbind(c(mean(uni.A), mean(multi.A), mean(multi.A2)),
-                 c(mean(uni.B), mean(multi.B), mean(multi.B2)),
-                 c(mean(uni.C), mean(multi.C), mean(multi.C2)))
-colnames(results) <- c("Univariate fdr", "mfdr (mFdr)", "mfdr (CV)")
-rownames(results) <- c("Causal (A)", "Correlated (B)", "Noise (C)")
 
-#### Plot
-dd <- melt(results)
-dd1 <- data.frame(Var2 = dd$Var2, Feature = dd$Var1, value = dd$value, scenario = rep("Assumptions Violated", nrow(dd)))
+## Ids for A/B vars within first 60 (last 540 are all "C")
+AB.ids <- rep("B", 60)
+AB.ids[id.A] <- "A"
+
+## Setup results data.frames
+df.cv <- data.frame(Estimate = (c(as.vector(res.lassocv[1:60,]), as.vector(res.lassocv[61:600,])) < .1),
+                    Type = c(rep(AB.ids, ncol(res.lassocv)),
+                              rep("C", 540*ncol(res.lassocv))))            
+
+df.cv.n <- group_by(df.cv, Type) %>% summarise(N = sum(Estimate)/ncol(res.lassocv))
+
+df.cv1se <-  data.frame(Estimate = (c(as.vector(res.lassocv1se[1:60,]), as.vector(res.lassocv1se[61:600,])) < .1),
+                        Type = c(rep(AB.ids, ncol(res.lassocv1se)),
+                                 rep("C", 540*ncol(res.lassocv1se))))            
+
+df.cv1se.n <- group_by(df.cv1se, Type) %>% summarise(N = sum(Estimate)/ncol(res.lassocv1se))
+
+
+df.mfdr <- data.frame(Estimate = (c(as.vector(res.lassomfdr[1:60,]), as.vector(res.lassomfdr[61:600,])) < .1),
+                     Type = c(rep(AB.ids, ncol(res.lassomfdr)),
+                              rep("C", 540*ncol(res.lassomfdr))))            
+
+df.mfdr.n <- group_by(df.mfdr, Type) %>% summarise(N = sum(Estimate)/ncol(res.lassomfdr))
+
+
+df.uni <-  data.frame(Estimate = (c(as.vector(res.uni[1:60,]), as.vector(res.uni[61:600,])) < .1),
+                      Type = c(rep(AB.ids, ncol(res.uni)),
+                               rep("C", 540*ncol(res.uni))))            
+
+df.uni.n <- group_by(df.uni, Type) %>% summarise(N = sum(Estimate)/ncol(res.uni))
+
+
+df.uniash <-  data.frame(Estimate = (c(as.vector(res.uniash[1:60,]), as.vector(res.uniash[61:600,])) < .1),
+                         Type = c(rep(AB.ids, ncol(res.uniash)),
+                                  rep("C", 540*ncol(res.uniash))))            
+
+df.uniash.n <- group_by(df.uni, Type) %>% summarise(N = sum(Estimate)/ncol(res.uniash))
+
+power.res.hard <- data.frame(Val = c(df.cv.n$N, df.cv1se.n$N, df.mfdr.n$N, df.uni.n$N, df.uniash.n$N),
+                        Method = c(rep("Lasso (CV)", 3), rep("Lasso (CV-1se)", 3), rep("Lasso (mFDR)", 3),
+                                   rep("Univariate (locfdr)", 3), rep("Univariate (ashr)", 3)),
+                        Var = c("Causal (A)","Correlated (B)","Noise (C)"), Scenario = "Assumptions Violated")
+
 
 load("simres/linear_easy.RData")
-results <- rbind(c(mean(uni.A), mean(multi.A), mean(multi.A2)),
-                 c(mean(uni.B), mean(multi.B), mean(multi.B2)),
-                 c(mean(uni.C), mean(multi.C), mean(multi.C2)))
-colnames(results) <- c("Univariate fdr", "mfdr (mFdr)", "mfdr (CV)")
-rownames(results) <- c("Causal (A)", "Correlated (B)", "Noise (C)")
+## Ids for A/B vars within first 60 (last 540 are all "C")
+AB.ids <- rep("A", 60)
 
-dd <- melt(results)
-dd2 <- data.frame(Var2 = dd$Var2, Feature = dd$Var1, value = dd$value, scenario = rep("Assumptions Met", nrow(dd)))
-ddd <- rbind(dd1, dd2)
+## Setup results data.frames
+df.cv <- data.frame(Estimate = (c(as.vector(res.lassocv[1:60,]), as.vector(res.lassocv[61:600,])) < .1),
+                    Type = c(rep(AB.ids, ncol(res.lassocv)),
+                             rep("C", 540*ncol(res.lassocv))))            
 
-pdf("Fig3.pdf", height=5, width=7.5)
-p <- ggplot(ddd, aes(x = Var2, y = value, fill = Feature)) + ggtitle("") +
+df.cv.n <- group_by(df.cv, Type) %>% summarise(N = sum(Estimate)/ncol(res.lassocv))
+
+df.cv1se <-  data.frame(Estimate = (c(as.vector(res.lassocv1se[1:60,]), as.vector(res.lassocv1se[61:600,])) < .1),
+                        Type = c(rep(AB.ids, ncol(res.lassocv1se)),
+                                 rep("C", 540*ncol(res.lassocv1se))))            
+
+df.cv1se.n <- group_by(df.cv1se, Type) %>% summarise(N = sum(Estimate)/ncol(res.lassocv1se))
+
+
+df.mfdr <- data.frame(Estimate = (c(as.vector(res.lassomfdr[1:60,]), as.vector(res.lassomfdr[61:600,])) < .1),
+                      Type = c(rep(AB.ids, ncol(res.lassomfdr)),
+                               rep("C", 540*ncol(res.lassomfdr))))            
+
+df.mfdr.n <- group_by(df.mfdr, Type) %>% summarise(N = sum(Estimate)/ncol(res.lassomfdr))
+
+
+df.uni <-  data.frame(Estimate = (c(as.vector(res.uni[1:60,]), as.vector(res.uni[61:600,])) < .1),
+                      Type = c(rep(AB.ids, ncol(res.uni)),
+                               rep("C", 540*ncol(res.uni))))            
+
+df.uni.n <- group_by(df.uni, Type) %>% summarise(N = sum(Estimate)/ncol(res.uni))
+
+
+df.uniash <-  data.frame(Estimate = (c(as.vector(res.uniash[1:60,]), as.vector(res.uniash[61:600,])) < .1),
+                         Type = c(rep(AB.ids, ncol(res.uniash)),
+                                  rep("C", 540*ncol(res.uniash))))            
+
+df.uniash.n <- group_by(df.uni, Type) %>% summarise(N = sum(Estimate)/ncol(res.uniash))
+
+power.res.easy <- data.frame(Val = c(df.cv.n$N, df.cv1se.n$N, df.mfdr.n$N, df.uni.n$N, df.uniash.n$N),
+                             Method = c(rep("Lasso (CV)", 2), rep("Lasso (CV-1se)", 2), rep("Lasso (mFDR)", 2),
+                                        rep("Univariate (locfdr)", 2), rep("Univariate (ashr)", 2)),
+                             Var = c("Causal (A)","Noise (C)"), Scenario = "Assumptions Met")
+
+power.combined <- rbind(power.res.hard, power.res.easy)
+
+pdf("figures_tables/Fig3.pdf", height=5, width=7.5)
+p <- ggplot(power.combined, aes(x = relevel(Method, ref = "Lasso (CV)"), y = Val, fill = Var)) + ggtitle("") +
   geom_bar(stat = "identity", position=position_stack(reverse=TRUE)) + scale_fill_manual(name = "Feature Type", values = pal(3)[c(2,3,1)]) +
   coord_flip() + scale_y_continuous(expression(paste("Features with ", widehat(mfdr), " or ", widehat(fdr), " < 0.10"))) + scale_x_discrete("Method")
-p + facet_grid(. ~ scenario, scales = "free")
+p + facet_grid(. ~ Scenario, scales = "free")
 dev.off()
 
 ########################################################################################
@@ -924,6 +1095,9 @@ dev.off()
 #           Simulations discussed in Sec 4.3 (comparisons to Selective Inf and SS)
 #
 ########################################################################################
+
+### Seed
+set.seed(1234)
 
 ### Assumptions met
 n <- 1000
@@ -1068,6 +1242,10 @@ save(final.true, final.false, t, fdr.true, fdr.true.cv,  true.cv, false.cv, p,
 
 
 ### Assumptions Violated
+
+### Seed
+set.seed(1234)
+
 ### Setup
 n <- 200
 p <- 600
@@ -1246,6 +1424,7 @@ save(id.A, id.B, id.C, final.true, final.cor, final.false, fdr.true, fdr.true.cv
 ########################################################################################
 
 
+
 load(file = "simres/model_easy.RData")
 p <- ncol(fdr.true)
 
@@ -1288,7 +1467,8 @@ RR2 <- data.frame(rbind(c(locmfdr.A,selinf.A),
 rownames(RR2) <- c("Avg 'A'", "Avg 'B'", "Avg C", "Avg FDR")
 colnames(RR2) <- c("loc-mfdr", colnames(RR2)[-1])
 
-pdf("Table2.pdf", height=7, width=8.5)
+
+pdf("figures_tables/Table2.pdf", height=7, width=8.5)
 grid.table(round(t(rbind(RR2, RR)), 2))
 dev.off()
 
@@ -1362,7 +1542,7 @@ cv.names2 <- cv.names[match(cv.output$name, rownames(cv.names)),1]
 ## note: the <NA> names are missing in the fData file, they are replaced 
 ## with the probe_id in the table appearing in the manuscript
 
-pdf("Table3.pdf", height=7, width=8.5)
+pdf("figures_tables/Table3.pdf", height=7, width=8.5)
 grid.table((data.frame(feature.uni = u.names2, fdr.uni = uni.output$fdr,
                        feature.mfdr = mf.names2, mfdr.mfdr = mfdr.output$fdr,
                        feature.cv = cv.names2, mfdr.cv = cv.output$fdr)))
@@ -1374,7 +1554,7 @@ dev.off()
 ### Figure 4
 #############
 
-pdf("Fig4.pdf", height=4, width=5.5)
+pdf("figures_tables/Fig4.pdf", height=4, width=5.5)
 plot(density(shedden.locfdr2$z), lwd = 2, col = 2, xlab = "z", main = "Density Comparisons")
 lines(seq(-5,5,by = .01), dnorm(seq(-5,5,by = .01)), col = 1, lwd = 2, lty = 2)
 lines(density(shedden.locfdr$z), lwd = 2, col = 3)
@@ -1425,7 +1605,7 @@ uni.output <- data.frame(name = colnames(X[,order(univariate.res$fdr)[1:10]]),
 
 # Note: Chromosome locations are not contained in these data and were manually added to the table appearing in the manuscript
 
-pdf("Table4.pdf", height=7, width=8.5)
+pdf("figures_tables/Table4.pdf", height=7, width=8.5)
 grid.table((data.frame(Gene = uni.output$name, uni_loc = uni.output$fdr,
                        mfdr_locmfdr = lassofdr.res1[id,2],
                        cv_locmfdr= lassofdr.res1[id,2])))
