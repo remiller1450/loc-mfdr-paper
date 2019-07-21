@@ -197,8 +197,8 @@ g_legend<-function(a.gplot){
 mylegend<-g_legend(p1)
 
 
-## Assemble the 4 plots into a single figure and store as pdf
-pdf("figures_tables/Fig1.pdf", height=7, width=8.5)
+## Assemble the 4 plots into a single figure and store
+png("figures_tables/Fig1.png", h=7, w=8.5, units = 'in', res = 300)
 grid.arrange(arrangeGrob(p4 + theme(legend.position="none"),
                          p3 + theme(legend.position="none"),
                          p2 + theme(legend.position="none"),
@@ -532,7 +532,7 @@ n <- 1000
 p <- 600
 t <- 60
 sig <- sqrt(n)
-beta <- c(rep(3,t/2), rep(-3,t/2), rep(0,p-t))
+beta <- c(rep(4,t/2), rep(-4,t/2), rep(0,p-t))
 
 ## Ids of var types
 id.A <- which(bb != 0)
@@ -738,20 +738,20 @@ p.uniash <- ggplot(df.uniash[sample.id,]) + geom_jitter(aes(x = Estimate, y = No
 
 
 ## Add loess curves from full sim results
-p.cv <- p.cv + geom_path(data = smooth.cv, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
-  labs(title = "mfdr (lambda CV) - Violated")
+p.cv <- p.cv + geom_path(data = smooth.cv, aes(x = xx, y = yy), lwd = 1.1) + geom_abline(slope = 1, intercept = 0, linetype = "dotted", lwd = 1)  +
+  labs(y = "Proportion (noise)")
 
-p.cv1se <- p.cv1se + geom_path(data = smooth.cv1se, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
-  labs(title = "mfdr (lambda CV-1se) - Violated")
+p.cv1se <- p.cv1se + geom_path(data = smooth.cv1se, aes(x = xx, y = yy), lwd = 1.1) + geom_abline(slope = 1, intercept = 0, linetype = "dotted", lwd = 1)  +
+  labs(y = "")
 
-p.mfdr <- p.mfdr + geom_path(data = smooth.mfdr, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
-  labs(title = "mfdr (lambda 10% mFDR) - Violated")
+p.mfdr <- p.mfdr + geom_path(data = smooth.mfdr, aes(x = xx, y = yy), lwd = 1.1) + geom_abline(slope = 1, intercept = 0, linetype = "dotted", lwd = 1)  +
+  labs(y = "")
 
-p.uni <- p.uni + geom_path(data = smooth.uni, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
-  labs(title = "fdr (locfdr) - Violated")
+p.uni <- p.uni + geom_path(data = smooth.uni, aes(x = xx, y = yy), lwd = 1.1) + geom_abline(slope = 1, intercept = 0, linetype = "dotted", lwd = 1)  +
+  labs(y = "")
 
-p.uniash <- p.uniash + geom_path(data = smooth.uniash, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
-  labs(title = "fdr (ashr) - Violated")
+p.uniash <- p.uniash + geom_path(data = smooth.uniash, aes(x = xx, y = yy), lwd = 1.1) + geom_abline(slope = 1, intercept = 0, linetype = "dotted", lwd = 1)  +
+  labs(y = "")
 
 
 ### Now generate upper row of Fig2 (assumptions met)
@@ -813,26 +813,33 @@ p.uniash2 <- ggplot(df.uniash[sample.id,]) + geom_jitter(aes(x = Estimate, y = N
 
 
 ## Add loess curves from full sim results
-p.cv2 <- p.cv2 + geom_path(data = smooth.cv, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
-  labs(title = "mfdr (lambda CV) - Met")
+p.cv2 <- p.cv2 + geom_path(data = smooth.cv, aes(x = xx, y = yy), lwd = 1.1) + geom_abline(slope = 1, intercept = 0, linetype = "dotted", lwd = 1) +
+  labs(y = "Proportion (noise)")
 
-p.cv1se2 <- p.cv1se2 + geom_path(data = smooth.cv1se, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
-  labs(title = "mfdr (lambda CV-1se) - Met")
+p.cv1se2 <- p.cv1se2 + geom_path(data = smooth.cv1se, aes(x = xx, y = yy), lwd = 1.1) + geom_abline(slope = 1, intercept = 0, linetype = "dotted", lwd = 1) +
+  labs(y = "")
 
-p.mfdr2 <- p.mfdr2 + geom_path(data = smooth.mfdr, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
-  labs(title = "mfdr (lambda 10% mFDR) - Met")
+p.mfdr2 <- p.mfdr2 + geom_path(data = smooth.mfdr, aes(x = xx, y = yy), lwd = 1.1) + geom_abline(slope = 1, intercept = 0, linetype = "dotted", lwd = 1) +
+  labs(y = "")
 
-p.uni2 <- p.uni2 + geom_path(data = smooth.uni, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
-  labs(title = "fdr (locfdr) - Met")
+p.uni2 <- p.uni2 + geom_path(data = smooth.uni, aes(x = xx, y = yy), lwd = 1.1) + geom_abline(slope = 1, intercept = 0, linetype = "dotted", lwd = 1)  +
+  labs(y = "")
 
-p.uniash2 <- p.uniash2 + geom_path(data = smooth.uniash, aes(x = xx, y = yy)) + geom_abline(slope = 1, intercept = 0, linetype = "dotted") +
-  labs(title = "fdr (ashr) - Met")
+p.uniash2 <- p.uniash2 + geom_path(data = smooth.uniash, aes(x = xx, y = yy), lwd = 1.1) + geom_abline(slope = 1, intercept = 0, linetype = "dotted", lwd = 1)  +
+  labs(y = "")
 
+
+#grid.arrange(p.cv, p.cv1se, p.mfdr, p.uni, p.uniash, 
+#             p.cv2, p.cv1se2, p.mfdr2, p.uni2, p.uniash2, nrow = 2)
 
 ### Generate and save Figure2 as a pdf
-pdf("figures_tables/Fig2.pdf", height=7, width=10)
-grid.arrange(p.cv, p.cv1se, p.mfdr, p.uni, p.uniash, 
-             p.cv2, p.cv1se2, p.mfdr2, p.uni2, p.uniash2, nrow = 2)
+png("figures_tables/Fig2.png", h=6, w=8.5, units = 'in', res = 300)
+
+grid.arrange(arrangeGrob(p.cv, top="lasso mfdr (CV)"), arrangeGrob(p.cv1se, top="lasso mfdr (CV)"),  
+             arrangeGrob(p.cv1se, top="Univariate fdr", right = "Assumptions Violated"),
+             arrangeGrob(p.cv2), arrangeGrob(p.cv1se2),  
+             arrangeGrob(p.uniash2, right = "Assumptions Met"), ncol=3)
+
 dev.off()
 
 
@@ -970,18 +977,23 @@ props.uni <- df.uni %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise
 props.uniash <- df.uniash %>% group_by(Estimate) %>% summarize(prop_noise = mean(Noise))
 
 tab.res <- data.frame(cv = props.cv$prop_noise,
-                      cv1se = as.numeric(props.cv1se$prop_noise),
+                      cv1se =props.cv1se$prop_noise, 
                       mfdr = props.mfdr$prop_noise,
                       uni = props.uni$prop_noise,
                       uniash = props.uniash$prop_noise)
+
+
 
 rownames(tab.res) <- levels(props.cv$Estimate)
 cox_hard_tab <- round(t(tab.res),3)
 rownames(cox_hard_tab) <- paste("Cox", rownames(cox_hard_tab))
 
 ttab1 <- rbind(lin_hard_tab, log_hard_tab, cox_hard_tab)
+ttab1 <- ttab1[which(rownames(ttab1) %in% c("Linear cv", "Linear cv1se", "Linear uniash",
+                                            "Logistic cv", "Logistic cv1se", "Logistic uniash",
+                                            "Cox cv", "Cox cv1se", "Cox uniash")), ]
 
-pdf("figures_tables/Table1.pdf", height=7, width=8.5)
+png("figures_tables/Table1.png", h=5, w=7, units = 'in', res = 300)
 grid.table(ttab1)
 dev.off()
 
@@ -1033,8 +1045,8 @@ df.uniash <-  data.frame(Estimate = (c(as.vector(res.uniash[1:60,]), as.vector(r
 df.uniash.n <- group_by(df.uni, Type) %>% summarise(N = sum(Estimate)/ncol(res.uniash))
 
 power.res.hard <- data.frame(Val = c(df.cv.n$N, df.cv1se.n$N, df.mfdr.n$N, df.uni.n$N, df.uniash.n$N),
-                        Method = c(rep("Lasso (CV)", 3), rep("Lasso (CV-1se)", 3), rep("Lasso (mFDR)", 3),
-                                   rep("Univariate (locfdr)", 3), rep("Univariate (ashr)", 3)),
+                        Method = c(rep("lasso mfdr (CV)", 3), rep("lasso mfdr (CV1se)", 3), rep("Lasso (mFDR)", 3),
+                                   rep("Univariate (locfdr)", 3), rep("Univariate fdr", 3)),
                         Var = c("Causal (A)","Correlated (B)","Noise (C)"), Scenario = "Assumptions Violated")
 
 
@@ -1077,14 +1089,15 @@ df.uniash <-  data.frame(Estimate = (c(as.vector(res.uniash[1:60,]), as.vector(r
 df.uniash.n <- group_by(df.uni, Type) %>% summarise(N = sum(Estimate)/ncol(res.uniash))
 
 power.res.easy <- data.frame(Val = c(df.cv.n$N, df.cv1se.n$N, df.mfdr.n$N, df.uni.n$N, df.uniash.n$N),
-                             Method = c(rep("Lasso (CV)", 2), rep("Lasso (CV-1se)", 2), rep("Lasso (mFDR)", 2),
-                                        rep("Univariate (locfdr)", 2), rep("Univariate (ashr)", 2)),
+                             Method = c(rep("lasso mfdr (CV)", 2), rep("lasso mfdr (CV1se)", 2), rep("Lasso (mFDR)", 2),
+                                        rep("Univariate (locfdr)", 2), rep("Univariate fdr", 2)),
                              Var = c("Causal (A)","Noise (C)"), Scenario = "Assumptions Met")
 
 power.combined <- rbind(power.res.hard, power.res.easy)
+power.combined <- power.combined[which(power.combined$Method %in% c("lasso mfdr (CV)", "lasso mfdr (CV1se)", "Univariate fdr")),]
 
-pdf("figures_tables/Fig3.pdf", height=5, width=7.5)
-p <- ggplot(power.combined, aes(x = relevel(Method, ref = "Lasso (CV)"), y = Val, fill = Var)) + ggtitle("") +
+png("figures_tables/Fig3.png", h=4, w=6, units = 'in', res = 300)
+p <- ggplot(power.combined, aes(x = relevel(Method, ref = "lasso mfdr (CV)"), y = Val, fill = Var)) + ggtitle("") +
   geom_bar(stat = "identity", position=position_stack(reverse=TRUE)) + scale_fill_manual(name = "Feature Type", values = pal(3)[c(2,3,1)]) +
   coord_flip() + scale_y_continuous(expression(paste("Features with ", widehat(mfdr), " or ", widehat(fdr), " < 0.10"))) + scale_x_discrete("Method")
 p + facet_grid(. ~ Scenario, scales = "free")
@@ -1097,9 +1110,9 @@ dev.off()
 ########################################################################################
 
 ### Seed
-set.seed(1234)
+set.seed(12345)
 
-### Assumptions met
+######## Assumptions met steup
 n <- 1000
 p <- 600
 
@@ -1107,7 +1120,7 @@ sig <- sqrt(n)
 t <- 60
 beta <- c(rep(4,t/2),rep(-4,t/2),rep(0,p-t))
 nreps <- 200
-pi0 = 1
+
 
 fdr.true <- fdr.true.cv <- fdr.true.uni <- matrix(NA, nrow = nreps, ncol = p)
 tres.pv <- fres.pv <- tres.spacing <- fres.spacing <- tres.modspacing <- tres.knockoff <- NULL
@@ -1116,41 +1129,9 @@ tres.ss <- cres.ss <- frate.ss <- numeric(nreps)
 true.cv <- false.cv <- numeric(nreps)
 
 for (i in 1:nreps){
+  ### Generate Data
   X <- matrix(rnorm(n*p), ncol = p, nrow = n)
   y <- X %*% beta + rnorm(n,sd = sig)
-  
-  ### Fit model
-  X <- std(X)
-  y <- scale(y, scale = FALSE)
-  fit <- ncvreg(X,y, penalty = "lasso", returnX = TRUE)
-  mfdr.lam <- max(which(mfdr(fit)$mFDR < .1))
-  cv.fit <- cv.ncvreg(X,y,penalty = "lasso")
-  cv.lam <- which(fit$lambda == cv.fit$lambda.min)
-  
-  true.cv[i] <- sum(cv.fit$fit$beta[2:61,cv.lam] != 0)
-  false.cv[i] <- sum(cv.fit$fit$beta[62:601,cv.lam] != 0)
-  
-  
-  ### Calculate zj for each lambda (mfdr)
-  R <- y - predict(fit, X, lambda = fit$lambda[mfdr.lam], type = "response")
-  z <- (1/n)*t(X) %*% R + fit$beta[-1,mfdr.lam]
-  ### Calculate zj for each lambda (CV)
-  R.cv <- y - predict(fit, X, lambda = fit$lambda[cv.lam], type = "response")
-  z.cv <- (1/n)*t(X) %*% R.cv + fit$beta[-1,cv.lam]
-  
-  
-  ### Estimate locfdr for each lambda
-  f <- density(z)
-  ff <- approxfun(f$x, f$y)
-  f.cv <- density(z.cv)
-  ff.cv <- approxfun(f.cv$x, f.cv$y)
-  S <- predict(fit, type = "nvars")
-  
-  sig.lam <- sqrt(fit$loss[mfdr.lam]/(n - S[mfdr.lam] + 1))
-  sig.cv <- sqrt(fit$loss[cv.lam]/(n - S[cv.lam] + 1))
-  locfdr.lam <- pmin(pi0*dnorm(z, 0, sig.lam/sqrt(n))/ff(z), 1)
-  locfdr.cv <- pmin(pi0*dnorm(z.cv, 0, sig.cv/sqrt(n))/ff.cv(z.cv), 1)
-  
   
   ### Use Sample Spliting
   ss.res <- hdi(X,y)
@@ -1213,10 +1194,6 @@ for (i in 1:nreps){
   false.kn <-sum(knres$selected > t) # false selections
   frate.kn <- false.kn/length(knres$selected) # false rate
   
-  #### store fdr for all vars
-  fdr.true[i,] <- locfdr.lam
-  fdr.true.cv[i,] <- locfdr.cv
-  
   ### store iteration results
   tres.pv <- c(tres.pv, true.pv)
   fres.pv <- c(fres.pv, frate.pv)
@@ -1237,20 +1214,19 @@ for (i in 1:nreps){
 final.true <- data.frame(pv = tres.pv, spacing = tres.spacing, modspacing = tres.modspacing, covtest = tres.covtest, ss = tres.ss, knock = tres.knockoff)
 final.false <- data.frame(pv = fres.pv, spacing = fres.spacing, modspacing = fres.modspacing, covtest = fres.covtest, ss = frate.ss, knock = fres.knockoff)
 
-save(final.true, final.false, t, fdr.true, fdr.true.cv,  true.cv, false.cv, p, 
-     file = "simres/model_easy.RData")
+save(final.true, final.false, file = "simres/model_easy.RData")
 
 
-### Assumptions Violated
+################### Assumptions Violated ###############################
 
 ### Seed
-set.seed(1234)
+set.seed(12345)
 
 ### Setup
 n <- 200
 p <- 600
 bb <- numeric(60)
-bb[(0:5)*10+1] <- c(5.5,-5.5,5,-5,4.5,-4.5)
+bb[(0:5)*10+1] <- c(6,-6,5,-5,4,-4)  #### 6 true variables (type A)
 
 id.A <- which(bb != 0)
 id.B <- 1:60
@@ -1259,7 +1235,6 @@ id.C <- 61:p
 
 t <- 60
 nreps <- 200
-pi0 = 1
 
 fdr.true <- fdr.true.cv <- fdr.true.uni <- matrix(NA, nrow = nreps, ncol = p)
 tres.pv <- fres.pv <- tres.spacing <- fres.spacing <- tres.modspacing <- tres.knockoff <- NULL
@@ -1275,39 +1250,6 @@ for (i in 1:nreps){
   
   X <- cbind(D1$X, D2$X)
   y <- D1$y
-  
-  
-  ### Fit model
-  X <- std(X)
-  y <- scale(y, scale = FALSE)
-  fit <- ncvreg(X,y, penalty = "lasso", returnX = TRUE)
-  mfdr.lam <- max(which(mfdr(fit)$mFDR < .1))
-  cv.fit <- cv.ncvreg(X,y,penalty = "lasso")
-  cv.lam <- which(fit$lambda == cv.fit$lambda.min)
-  
-  true.cv[i] <- sum(cv.fit$fit$beta[id.A + 1,cv.lam] != 0)
-  cor.cv[i] <- sum(cv.fit$fit$beta[id.B + 1,cv.lam] != 0)
-  false.cv[i] <- sum(cv.fit$fit$beta[id.C + 1,cv.lam] != 0)
-  
-  ### Calculate zj for each lambda (mfdr)
-  R <- y - predict(fit, X, lambda = fit$lambda[mfdr.lam], type = "response")
-  z <- (1/n)*t(X) %*% R + fit$beta[-1,mfdr.lam]
-  ### Calculate zj for each lambda (CV)
-  R.cv <- y - predict(fit, X, lambda = fit$lambda[cv.lam], type = "response")
-  z.cv <- (1/n)*t(X) %*% R.cv + fit$beta[-1,cv.lam]
-  
-  
-  ### Estimate locfdr for each lambda
-  f <- density(z)
-  ff <- approxfun(f$x, f$y)
-  f.cv <- density(z.cv)
-  ff.cv <- approxfun(f.cv$x, f.cv$y)
-  S <- predict(fit, type = "nvars")
-  
-  sig.lam <- sqrt(fit$loss[mfdr.lam]/(n - S[mfdr.lam] + 1))
-  sig.cv <- sqrt(fit$loss[cv.lam]/(n - S[cv.lam] + 1))
-  locfdr.lam <- pmin(pi0*dnorm(z, 0, sig.lam/sqrt(n))/ff(z), 1)
-  locfdr.cv <- pmin(pi0*dnorm(z.cv, 0, sig.cv/sqrt(n))/ff.cv(z.cv), 1)
   
   ### Use Sample Spliting
   ss.res <- hdi(X,y)
@@ -1383,10 +1325,6 @@ for (i in 1:nreps){
   false.kn <- sum(knres$selected > t) # var C selections
   frate.kn <- false.kn/length(knres$selected) # false rate
   
-  #### store fdr for all vars
-  fdr.true[i,] <- locfdr.lam
-  fdr.true.cv[i,] <- locfdr.cv
-  
   ### store iteration results
   tres.pv <- c(tres.pv, true.pv)
   cres.pv <- c(cres.pv, cor.pv)
@@ -1414,8 +1352,7 @@ final.true <- data.frame(pv = tres.pv, spacing = tres.spacing, modspacing = tres
 final.cor <- data.frame(pv = cres.pv, spacing = cres.spacing, modspacing = cres.modspacing, covtest = cres.covtest, ss = cres.ss, knock = cres.knockoff)
 final.false <- data.frame(pv = fres.pv, spacing = fres.spacing, modspacing = fres.modspacing, covtest = fres.covtest, ss = frate.ss, knock = fres.knockoff)
 
-save(id.A, id.B, id.C, final.true, final.cor, final.false, fdr.true, fdr.true.cv,
-     true.cv, cor.cv, false.cv, p, file = "simres/model_hard.RData")
+save(id.A, id.B, id.C, final.true, final.cor, final.false, file = "simres/model_hard.RData")
 
 ########################################################################################
 #
@@ -1431,45 +1368,46 @@ p <- ncol(fdr.true)
 selinf.A <- apply(final.true, 2, mean)
 final.false[is.na(final.false)] <- 0  ### Fdr of 0/0 is defined as 0
 selinf.nC <- apply(final.false, 2, mean)
-selinf.C <- colSums(final.false)/(colSums(final.true) + colSums(final.false))
+selinf.perC <- colSums(final.false)/(colSums(final.true) + colSums(final.false))
 
-locmfdr.A <- sum(colMeans(fdr.true[,1:t] < .10))
-locmfdr.nC <- sum(colMeans(fdr.true[,(t+1):p] < .10))
-locmfdr.C <- sum(colSums(fdr.true[,(t+1):p] < .10))/sum(colSums(fdr.true < .10))
+load(file = "simres/linear_easy.RData")
+locmfdr.A <- sum(rowMeans(res.lassocv[1:60,] < .1))
+locmfdr.nC <- sum(rowMeans(res.lassocv[61:600,] < .1))
+locmfdr.perC <- sum(rowMeans(res.lassocv[61:600,] < .1))/sum(rowMeans(res.lassocv < .1))
 
-RR <- data.frame(rbind(c(locmfdr.A, selinf.A),
+mod.res.easy <- data.frame(rbind(c(locmfdr.A, selinf.A),
                        NA,
                        c(locmfdr.nC, selinf.nC),
-                       c(locmfdr.C, selinf.C)))
+                       c(locmfdr.perC, selinf.perC)))
 
-rownames(RR) <- c("Avg 'A'", "Avg 'B'", "Avg C", "Avg FDR")
-colnames(RR) <- c("loc-mfdr", colnames(RR)[-1])
+rownames(mod.res.easy) <- c("Avg 'A'", "Avg 'B'", "Avg C", "Avg FDR")
+colnames(mod.res.easy) <- c("loc-mfdr", colnames(mod.res.easy)[-1])
 
 
 load(file = "simres/model_hard.RData")
-
 selinf.A <- apply(final.true, 2, mean)
 selinf.B <- apply(final.cor, 2, mean)
 final.false[is.na(final.false)] <- 0 ### Fdr of 0/0 is defined as 0
 selinf.nC <- apply(final.false, 2, mean)
-selinf.C <- colSums(final.false)/(colSums(final.true) + colSums(final.false))
+selinf.perC <- colSums(final.false)/(colSums(final.true) + colSums(final.false))
 
-locmfdr.A <- sum(colMeans(fdr.true[,id.A] < .10))
-locmfdr.B <- sum(colMeans(fdr.true[,id.B] < .10))
-locmfdr.nC <- sum(colMeans(fdr.true[,id.C] < .10))
-locmfdr.C <- sum(colSums(fdr.true[,id.C] < .10))/sum(colSums(fdr.true < .10))
+load(file = "simres/linear_hard.RData")
+locmfdr.A <- sum(rowMeans(res.lassocv[id.A,] < .1))
+locmfdr.B <- sum(rowMeans(res.lassocv[id.B,] < .1))
+locmfdr.nC <- sum(rowMeans(res.lassocv[61:600,] < .1))
+locmfdr.perC <- sum(rowMeans(res.lassocv[61:600,] < .1))/sum(rowMeans(res.lassocv< .1))
 
-RR2 <- data.frame(rbind(c(locmfdr.A,selinf.A),
+mod.res.hard <- data.frame(rbind(c(locmfdr.A,selinf.A),
                         c(locmfdr.B,selinf.B),
                         c(locmfdr.nC,selinf.nC),
-                        c(locmfdr.C,selinf.C)))
+                        c(locmfdr.perC,selinf.perC)))
 
-rownames(RR2) <- c("Avg 'A'", "Avg 'B'", "Avg C", "Avg FDR")
-colnames(RR2) <- c("loc-mfdr", colnames(RR2)[-1])
+rownames(mod.res.hard) <- c("Avg 'A' - Violated", "Avg 'B' - Violated", "Avg C - Violated", "Avg FDR - Violated")
+colnames(mod.res.hard) <- c("loc-mfdr", colnames(mod.res.hard)[-1])
 
 
-pdf("figures_tables/Table2.pdf", height=7, width=8.5)
-grid.table(round(t(rbind(RR2, RR)), 2))
+png("figures_tables/Table2.png", h=7, w=10, units = 'in', res = 300)
+grid.table(round(t(rbind(mod.res.hard, mod.res.easy))[,-6], 2))
 dev.off()
 
 
@@ -1486,83 +1424,84 @@ dev.off()
 load("case_study_data/Shedden2008.RData")
 
 ### Set up model matrix
-XX <- std(X)
 ZZ <- model.matrix(~ factor(Sex) + factor(Race) + factor(AdjChemo) + factor(SmHist) + factor(Margin) + factor(Grade), Z)
-w <- rep(0:1, c(ncol(ZZ)-1, ncol(X))) ## Don't the penalize clinical covariates
-fit2 <- ncvsurv(cbind(std(ZZ[,-1]), XX), S, penalty = 'lasso', returnX = TRUE, penalty.factor = w)
+XX <- cbind(X, ZZ)
+w <- rep(0:1, c(ncol(ZZ), ncol(X))) ## Don't the penalize clinical covariates
 
-### local mfdr at MFdr lambda
-step <- max(which(mfdr(fit2)$mFDR < .1))
-shedden.locfdr <- case.locmfdr(fit2, fit2$lambda[step])
-
-id <- order(shedden.locfdr[,2])[1:10] - 17  ## Subtract 17 because of 17 unpenalized vars
-mfdr.output <- data.frame(name = colnames(X[,id]),
-                          z = shedden.locfdr[order(shedden.locfdr[,2]),][1:10,1],
-                          fdr = shedden.locfdr[order(shedden.locfdr[,2]),][1:10,2])
-
-
-## local mfdr at CV lambda
+### Fit model
 set.seed(12345)
-cv.fit2 <- cv.ncvsurv(cbind(std(ZZ[,-1]), XX), S, penalty = 'lasso', penalty.factor = w)
-cv.lambda <- cv.fit2$lambda.min
+cv.fit <- cv.ncvsurv(XX, S, penalty = 'lasso', returnX = TRUE, penalty.factor = w)
+fit <- cv.fit$fit
 
-shedden.locfdr2 <- case.locmfdr(fit2, cv.lambda)
+## positions of lambda values of interest
+cv1se.lam <- min(which(cv.fit$cve - cv.fit$cvse <  min(cv.fit$cve)))
+cv.lam <- which(cv.fit$fit$lambda == cv.fit$lambda.min)
 
-idd <- order(shedden.locfdr2[,2])[1:10] - 17  ## Subtract 17 because of 17 unpenalized vars
-cv.output <- data.frame(name = colnames(X[,idd]),
-                        z = shedden.locfdr2[order(shedden.locfdr2[,2]),][1:10,1],
-                        fdr = shedden.locfdr2[order(shedden.locfdr2[,2]),][1:10,2])
+## local mfdr using model/lambdas from above
+locfdr.cv  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")$pen.vars
+locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "kernel")$pen.vars
 
+summary(locfdr.cv$z)
+
+## Results
+shedden.cv.res <- data.frame(name = row.names(locfdr.cv[order(locfdr.cv$mfdr),])[1:10],
+                          z = locfdr.cv[order(locfdr.cv$mfdr),][1:10,2],
+                          fdr = locfdr.cv[order(locfdr.cv$mfdr),][1:10,3])
+
+
+shedden.cv1se.res <- data.frame(name = row.names(locfdr.cv1se[order(locfdr.cv1se$mfdr),])[1:10],
+                             z = locfdr.cv1se[order(locfdr.cv1se$mfdr),][1:10,2],
+                             fdr = locfdr.cv1se[order(locfdr.cv1se$mfdr),][1:10,3])
 
 #### Univariate locfdr (for comparison)
-zstat <- rep(NA, ncol(XX))
-for (j in 1:ncol(XX)){
-  fit.uni <- coxph(S ~ XX[,j] + ZZ[,-1])
+zstat <- rep(NA, ncol(X))
+for (j in 1:ncol(X)){
+  fit.uni <- coxph(S ~ X[,j] + ZZ[,-1])
   zstat[j] <- summary(fit.uni)$coefficients[1,4]
 }
-univariate.res <- locfdr(zstat, nulltype = 0, plot = 0)
 
-uni.output <- data.frame(name = colnames(X[,order(univariate.res$fdr)[1:10]]),
-                         z = zstat[order(univariate.res$fdr)][1:10],
-                         fdr = univariate.res$fdr[order(univariate.res$fdr)][1:10])
+## Univariate using ashr
+univariate.res.ash <- get_lfdr(ash(beta = zstat, se = rep(1, length(zstat))))
+
+shedden.uni.res <- data.frame(name = colnames(X[,order(univariate.res.ash)[1:10]]),
+                         z = zstat[order(univariate.res.ash)][1:10],
+                         fdr = univariate.res.ash[order(univariate.res.ash)][1:10])
+
 
 #############
 ### Table 3
 #############
 
-u.names <- fData[row.names(fData) %in% uni.output$name,]
-u.names2 <- u.names[match(uni.output$name, rownames(u.names)),1]
+u.names <- fData[row.names(fData) %in% shedden.uni.res$name,]
+u.names2 <- u.names[match(shedden.uni.res$name, rownames(u.names)),1]
 
-mf.names <- fData[row.names(fData) %in% mfdr.output$name,]
-mf.names2 <- mf.names[match(mfdr.output$name, rownames(mf.names)),1]
+cv.names <- fData[row.names(fData) %in% shedden.cv.res$name,]
+cv.names2 <- cv.names[match(shedden.cv.res$name, rownames(cv.names)),1]
 
-cv.names <- fData[row.names(fData) %in% cv.output$name,]
-cv.names2 <- cv.names[match(cv.output$name, rownames(cv.names)),1]
+cv1se.names <- fData[row.names(fData) %in% shedden.cv1se.res$name,]
+cv1se.names2 <- cv1se.names[match(shedden.cv1se.res$name, rownames(cv1se.names)),1]
 
 ## note: the <NA> names are missing in the fData file, they are replaced 
 ## with the probe_id in the table appearing in the manuscript
 
-pdf("figures_tables/Table3.pdf", height=7, width=8.5)
-grid.table((data.frame(feature.uni = u.names2, fdr.uni = uni.output$fdr,
-                       feature.mfdr = mf.names2, mfdr.mfdr = mfdr.output$fdr,
-                       feature.cv = cv.names2, mfdr.cv = cv.output$fdr)))
+png("figures_tables/Table3.png", h=6, w=8.5, units = 'in', res = 300)
+grid.table(data.frame(feature.uni = u.names2, fdr.uni = round(shedden.uni.res$fdr,4),
+                       feature.cv1se = cv1se.names2, mfdr.cv1se = round(shedden.cv1se.res$fdr,4),
+                       feature.cv = cv.names2, mfdr.cv = round(shedden.cv.res$fdr,4)))
 dev.off()
-
 
 
 #############
 ### Figure 4
 #############
 
-pdf("figures_tables/Fig4.pdf", height=4, width=5.5)
-plot(density(shedden.locfdr2$z), lwd = 2, col = 2, xlab = "z", main = "Density Comparisons")
+png("figures_tables/Fig4.png", h=4, w=5, units = 'in', res = 300)
+plot(density(locfdr.cv$z), lwd = 2, col = 2, xlab = "z", main = "Density Comparisons")
 lines(seq(-5,5,by = .01), dnorm(seq(-5,5,by = .01)), col = 1, lwd = 2, lty = 2)
-lines(density(shedden.locfdr$z), lwd = 2, col = 3)
+lines(density(locfdr.cv1se$z), lwd = 2, col = 3)
 lines(density(zstat), lwd = 2, col = 4)
-legend("topright", legend = c("lasso (CV)", "lasso (mfdr)", "Univariate", "Theoretical Null"), col = c(2,3,4,1), lty = c(1,1,1,2), lwd = 2)
+legend("topright", legend = c("lasso (CV)", "lasso (CV-1se)", "Univariate", "Theoretical Null"), col = c(2,3,4,1), lty = c(1,1,1,2), lwd = 2, bty = "n")
 dev.off()
-
-
 
 
 ### Case study #2 (table 4)
@@ -1570,17 +1509,21 @@ dev.off()
 ## Load TCGA BRCA1 dataset
 TCGA <- readRDS("case_study_data//bcTCGA.rds")
 
-## Standardize and fit penalized regression models
+## fit model
 X <- TCGA$X
-XX <- std(X)
 y <- TCGA$y
-fit <- ncvreg(XX, y, penalty = "lasso", returnX = TRUE)
-cv.fit <- cv.ncvreg(XX, y, penalty = "lasso")
-step <- max(which(mfdr(fit)[,3] < .1))
+set.seed(12345)
+cv.fit <- cv.ncvreg(X, y, penalty = "lasso")
+fit <- cv.fit$fit
 
-### local mfdr at two different lambda values
-lassofdr.res1 <- locmfdr(fit, fit$lambda[step])
-lassofdr.res2 <- locmfdr(fit, cv.fit$lambda.min)
+## positions of lambda values of interest
+cv1se.lam <- min(which(cv.fit$cve - cv.fit$cvse <  min(cv.fit$cve)))
+cv.lam <- which(cv.fit$fit$lambda == cv.fit$lambda.min)
+
+## local mfdr using model/lambdas from above
+locfdr.cv  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "ashr", mixcompdist = "halfuniform")
+locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "ashr", mixcompdist = "halfuniform")
+
 
 ### Univariate testing
 tstat <- numeric(ncol(X))
@@ -1591,12 +1534,13 @@ for (j in 1:ncol(X)){
 zstat <- qnorm(pt(tstat,n - 2))
 zstat[is.infinite(zstat)] <- tstat[is.infinite(zstat)] ## Make infinite z-stats into their pre-transformed t-stat
 
-univariate.res <- locfdr(zstat, nulltype = 0, plot = 0)
+#univariate.res <- locfdr(zstat, nulltype = 0, plot = 0)$fdr
+univariate.res <- get_lfdr(ash(beta = zstat, se = rep(1, length(zstat))))
 
-id <- order(univariate.res$fdr)[1:10]  ## Top 10 univariate selections
-uni.output <- data.frame(name = colnames(X[,order(univariate.res$fdr)[1:10]]),
-                         z = zstat[order(univariate.res$fdr)][1:10],
-                         fdr = univariate.res$fdr[order(univariate.res$fdr)][1:10])
+id <- order(univariate.res)[1:10]  ## Top 10 univariate selections
+uni.output <- data.frame(name = colnames(X[,order(univariate.res)[1:10]]),
+                         z = zstat[order(univariate.res)][1:10],
+                         fdr = univariate.res[order(univariate.res)][1:10])
 
 
 #############
@@ -1605,9 +1549,9 @@ uni.output <- data.frame(name = colnames(X[,order(univariate.res$fdr)[1:10]]),
 
 # Note: Chromosome locations are not contained in these data and were manually added to the table appearing in the manuscript
 
-pdf("figures_tables/Table4.pdf", height=7, width=8.5)
-grid.table((data.frame(Gene = uni.output$name, uni_loc = uni.output$fdr,
-                       mfdr_locmfdr = lassofdr.res1[id,2],
-                       cv_locmfdr= lassofdr.res1[id,2])))
+png("figures_tables/Table4.png", h=7, w=8, units = 'in', res = 300)
+grid.table(data.frame(Gene = uni.output$name, uni_fdr = uni.output$fdr,
+                       CV1se_mfdr = locfdr.cv1se[id,3],
+                       CV_mfdr = locfdr.cv[id,3]))
 dev.off()
 
