@@ -1596,3 +1596,7 @@ ggplot(locfdr.cv.kernel, aes(x = z, y = mfdr)) + geom_point()
 
 ggplot(locfdr.cv.ashr, aes(x = z)) + geom_density() + 
   stat_function(fun=dnorm,color="red",args=list(mean=0, sd=1))
+
+ashr.fit <- ash.workhorse(locfdr.cv.kernel$z, rep(1, nrow(locfdr.cv.kernel)))
+get_density(ashr.fit)
+
