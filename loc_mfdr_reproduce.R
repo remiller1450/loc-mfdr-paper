@@ -195,7 +195,7 @@ mylegend<-g_legend(p1)
 
 
 ## Assemble the 4 plots into a single figure and store as pdf
-pdf("Fig1.pdf", height=7, width=8.5)
+pdf("figures_tables/Fig1.pdf", height=7, width=8.5)
 grid.arrange(arrangeGrob(p4 + theme(legend.position="none"),
                          p3 + theme(legend.position="none"),
                          p2 + theme(legend.position="none"),
@@ -897,7 +897,7 @@ p2 <- ggplot(df.tot, aes(est,id, col = Method)) + geom_jitter(width = 0, height 
   facet_grid(. ~ Method)
 
 ### Generate and save Figure2 as a pdf
-pdf("Fig2.pdf", height=5.5, width=8)
+pdf("figures_tables/Fig2.pdf", height=5.5, width=8)
 multiplot(p2, p1, cols=1)
 dev.off()
 

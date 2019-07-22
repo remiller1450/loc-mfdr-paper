@@ -1,80 +1,12 @@
-
-
-### Function to calculate the local mfdr from a ncvreg object at a specified lambda value
-locmfdr <- function(fit, lambda){
-  ### Setup
-  X <- fit$X
-  y <- fit$y
-  n <- nrow(X)
-  p <- ncol(X)
-  S <- predict(fit, type = "nvars")
-  step <- which(fit$lambda == lambda)
-  
-  ### Linear regression
-  if(class(fit)[1] == "ncvreg"){
-    if(fit$family == "gaussian"){
-      ### Calculate z_j
-      R <- y - predict(fit, X, lambda = lambda, type = "response")
-      z <- (1/n)*t(X) %*% R + fit$beta[-1,step]
-      sig.est <- sqrt(fit$loss[step]/(n - S[step] + 1))
-      z <- z/(sig.est/sqrt(n))
-      
-      ### Calculate locfdrs
-      f <- density(z)
-      ff <- approxfun(f$x, f$y)
-      est.gam <- pmin(dnorm(z, 0, 1)/ff(z), 1) ## rows = variables, cols = lambdas
-    }
-    
-    ### Logistic regression 
-    else if (fit$family == "binomial"){
-      P <-  predict(fit, X, lambda = lambda, type = 'response')
-      U <- y - P   ### Calculating the score
-      W <- diag(as.vector(P*(1 - P)))  
-      
-      ### Calculate zj
-      z <- rep(NA, p)
-      for (j in 1:p){
-        vj <- t(X[,j]) %*% W %*% X[,j]
-        z[j] <- (X[,j] %*% U + vj * fit$beta[(j+1),step])/(sqrt(vj))  ### j+1 bc intercept
-      }
-      
-      ### Calculate locfdrs
-      f <- density(z)
-      ff <- approxfun(f$x, f$y)
-      est.gam <- pmin(dnorm(z, 0, 1)/ff(z), 1)
-    }
+## Color palatte used for the figures
+pal <- function(n, alpha=1) {
+  if (n==2) {
+    val <- hcl(seq(15,375,len=4), l=60, c=150, alpha=alpha)[c(1,3)]
+  } else {
+    val <- hcl(seq(15,375,len=n+1), l=60, c=150, alpha=alpha)[1:n]
   }
-  
-  ### Cox regression
-  if(class(fit)[1] == "ncvsurv"){
-    d <- fit$fail
-    rsk <- rev(cumsum(rev(exp(fit$Eta[,step]))))
-    P <- outer(exp(fit$Eta[,step]), rsk, '/')
-    P[upper.tri(P)] <- 0
-    U <- d - P%*%d  
-    
-    ### Calculate W (maybe diag for speed?)
-    W <- -P %*% diag(d) %*% t(P)
-    #W <- matrix(0, n,n)
-    diag(W) <- diag(P %*% diag(d) %*% t(1-P))
-    
-    ### Calculate v_j and then z_j
-    z <- rep(NA, p)
-    for (j in 1:p){
-      vj <- t(X[,j]) %*% W %*% X[,j]
-      z[j] <- (X[,j] %*% U + vj * fit$beta[j,step])/(sqrt(vj))
-    }
-    
-    ### Calculate locfdr
-    f <- density(z)
-    ff <- approxfun(f$x, f$y)
-    est.gam <- pmin(dnorm(z, 0, 1)/ff(z), 1)
-  }
-  
-  results <- data.frame(z = z, locfdr = est.gam)
-  return(results)
+  val
 }
-
 
 ### Function used to generate correlated data following structural shown in the A-B-C causal diagram
 genData <- function(n, J, K=1, beta, family=c("gaussian","binomial","survival"), J0=ceiling(J/2), K0=K, SNR=1, sig = c("homogeneous","heterogeneous"), sig.g = c("homogeneous","heterogeneous"), rho = 0, rho.g = rho, corr=c("exchangeable", "autoregressive")) {
@@ -146,8 +78,8 @@ genY <- function(eta,family=c("gaussian","binomial","survival"),sigma=1,lam.0=1)
 }
 
 
-### A version of locmfdr with more features (sorting, in-house standardization checks, etc)
-locmfdr.new <- function(fit, lambda, X = NULL, y = NULL, number = NULL, alpha = NULL){
+### A version of locmfdr with features (sorting, in-house standardization checks, etc) needed to construct Fig 1
+locmfdr.plot1 <- function(fit, lambda, X = NULL, y = NULL, number = NULL, alpha = NULL){
   ### Check for valid args
   if(!is.null(number)){
     if(number < 1) stop("'number' should be a positive integer")
@@ -263,127 +195,3 @@ locmfdr.new <- function(fit, lambda, X = NULL, y = NULL, number = NULL, alpha = 
   return(results[pen.idx,])
 }
 
-
-
-## Case Study mfdr function
-#### DATA MUST BE STANDARDIZED BEFORE MODEL FITTING WITH THIS FUCTION
-case.locmfdr <- function(fit, lambda){
-  ### Setup
-  X <- fit$X
-  y <- fit$y
-  n <- nrow(X)
-  p <- ncol(X)
-  S <- predict(fit, type = "nvars")
-  step <- which(fit$lambda == lambda)
-  pen.idx <- fit$penalty.factor > 0
-  
-  ### Linear regression
-  if(class(fit)[1] == "ncvreg"){
-    if(fit$family == "gaussian"){
-      ### Calculate z_j
-      R <- y - predict(fit, X, lambda = lambda, type = "response")
-      z <- (1/n)*t(X) %*% R + fit$beta[-1,step]
-      sig.est <- sqrt(fit$loss[step]/(n - S[step] + 1))
-      z <- z/(sig.est/sqrt(n))
-      
-    }
-    
-    ### Logistic regression 
-    else if (fit$family == "binomial"){
-      P <-  predict(fit, X, lambda = lambda, type = 'response')
-      U <- y - P   ### Calculating the score
-      W <- diag(as.vector(P*(1 - P)))  
-      
-      ### Calculate zj
-      z <- rep(NA, p)
-      for (j in 1:p){
-        vj <- t(X[,j]) %*% W %*% X[,j]
-        z[j] <- (X[,j] %*% U + vj * fit$beta[(j+1),step])/(sqrt(vj))  ### j+1 bc intercept
-      }
-      
-    }
-  }
-  
-  ### Cox regression
-  if(class(fit)[1] == "ncvsurv"){
-    d <- fit$fail
-    rsk <- rev(cumsum(rev(exp(fit$Eta[,step]))))
-    P <- outer(exp(fit$Eta[,step]), rsk, '/')
-    P[upper.tri(P)] <- 0
-    U <- d - P%*%d  
-    
-    ### Calculate W (maybe diag for speed?)
-    W <- -P %*% diag(d) %*% t(P)
-    #W <- matrix(0, n,n)
-    diag(W) <- diag(P %*% diag(d) %*% t(1-P))
-    
-    ### Calculate v_j and then z_j
-    z <- rep(NA, p)
-    for (j in 1:p){
-      vj <- t(X[,j]) %*% W %*% X[,j]
-      z[j] <- (X[,j] %*% U + vj * fit$beta[j,step])/(sqrt(vj))
-    }
-    
-  }
-  
-  ### Calculate locfdr
-  
-  f <- density(z[pen.idx])
-  ff <- approxfun(f$x, f$y)
-  est.gam1 <- pmin(dnorm(z, 0, 1)/ff(z), 1)
-  est.gam1[!pen.idx] <- NA
-  
-  
-  results <- data.frame(z = z, locfdr_def = est.gam1)
-  #return(list(results, f, aa, bkde.xy)) ### Use to generate comparison plots
-  return(results)
-}
-
-
-
-## Color palatte used for the figures
-pal <- function(n, alpha=1) {
-  if (n==2) {
-    val <- hcl(seq(15,375,len=4), l=60, c=150, alpha=alpha)[c(1,3)]
-  } else {
-    val <- hcl(seq(15,375,len=n+1), l=60, c=150, alpha=alpha)[1:n]
-  }
-  val
-}
-
-### Function to stack multiple plots
-multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
-  library(grid)
-  
-  # Make a list from the ... arguments and plotlist
-  plots <- c(list(...), plotlist)
-  
-  numPlots = length(plots)
-  
-  # If layout is NULL, then use 'cols' to determine layout
-  if (is.null(layout)) {
-    # Make the panel
-    # ncol: Number of columns of plots
-    # nrow: Number of rows needed, calculated from # of cols
-    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-                     ncol = cols, nrow = ceiling(numPlots/cols))
-  }
-  
-  if (numPlots==1) {
-    print(plots[[1]])
-    
-  } else {
-    # Set up the page
-    grid.newpage()
-    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-    
-    # Make each plot, in the correct location
-    for (i in 1:numPlots) {
-      # Get the i,j matrix positions of the regions that contain this subplot
-      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-      
-      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
-                                      layout.pos.col = matchidx$col))
-    }
-  }
-}

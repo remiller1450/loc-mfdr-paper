@@ -65,7 +65,7 @@ lseq <- fit$lambda
 locfdr.res <- matrix(NA, nrow = ncol(X), ncol = length(lseq))
 sel.mat <- matrix(NA, nrow = ncol(X), ncol = length(lseq))
 for(i in 1:length(lseq)){
-  temp <- locmfdr.new(fit$fit, lambda = lseq[i], number = ncol(X))
+  temp <- locmfdr.plot1(fit$fit, lambda = lseq[i], number = ncol(X))
   locfdr.res[,i] <- temp$locfdr
   sel.mat[,i] <- (temp$selected == '*')
 }
@@ -532,7 +532,7 @@ n <- 1000
 p <- 600
 t <- 60
 sig <- sqrt(n)
-beta <- c(rep(4,t/2), rep(-4,t/2), rep(0,p-t))
+beta <- c(rep(3,t/2), rep(-3,t/2), rep(0,p-t))
 
 ## Ids of var types
 id.A <- which(bb != 0)
@@ -781,7 +781,7 @@ df.uniash <-  data.frame(Estimate = c(as.vector(res.uniash[1:60,]), as.vector(re
 ### Loess curves
 xx <- seq(0, 1, by = .01)
 
-l.cv <- with(df.cv, loess(Noise ~ Estimate, span = .15))
+l.cv <- with(df.cv, loess(Noise ~ Estimate, span = .2))
 yy.cv <- predict(l.cv, newdata = xx)
 smooth.cv <- data.frame(xx = xx, yy = yy.cv)
 
@@ -789,7 +789,7 @@ l.cv1se <- with(df.cv1se, loess(Noise ~ Estimate, span = .15))
 yy.cv1se <- predict(l.cv1se, newdata = xx)
 smooth.cv1se <- data.frame(xx = xx, yy = yy.cv1se)
 
-l.mfdr <- with(df.mfdr, loess(Noise ~ Estimate, span = .15))
+l.mfdr <- with(df.mfdr, loess(Noise ~ Estimate, span = .2))
 yy.mfdr <- predict(l.mfdr, newdata = xx)
 smooth.mfdr <- data.frame(xx = xx, yy = yy.mfdr)
 
@@ -797,7 +797,7 @@ l.uni <- with(df.uni, loess(Noise ~ Estimate, span = .45))
 yy.uni <- predict(l.uni, newdata = xx)
 smooth.uni <- data.frame(xx = xx, yy = yy.uni)
 
-l.uniash <- with(df.uniash, loess(Noise ~ Estimate, span = .15))
+l.uniash <- with(df.uniash, loess(Noise ~ Estimate, span = .2))
 yy.uniash <- predict(l.uniash, newdata = xx)
 smooth.uniash <- data.frame(xx = xx, yy = yy.uniash)
 
@@ -1441,7 +1441,7 @@ cv.lam <- which(cv.fit$fit$lambda == cv.fit$lambda.min)
 locfdr.cv  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")$pen.vars
 locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "kernel")$pen.vars
 
-summary(locfdr.cv$z)
+summary(fit, fit$lambda[cv.lam], method = "kernel")
 
 ## Results
 shedden.cv.res <- data.frame(name = row.names(locfdr.cv[order(locfdr.cv$mfdr),])[1:10],
@@ -1495,7 +1495,7 @@ dev.off()
 ### Figure 4
 #############
 
-png("figures_tables/Fig4.png", h=4, w=5, units = 'in', res = 300)
+png("figures_tables/Fig4.png", h=4.5, w=6, units = 'in', res = 300)
 plot(density(locfdr.cv$z), lwd = 2, col = 2, xlab = "z", main = "Density Comparisons")
 lines(seq(-5,5,by = .01), dnorm(seq(-5,5,by = .01)), col = 1, lwd = 2, lty = 2)
 lines(density(locfdr.cv1se$z), lwd = 2, col = 3)
@@ -1524,6 +1524,9 @@ cv.lam <- which(cv.fit$fit$lambda == cv.fit$lambda.min)
 locfdr.cv  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "ashr", mixcompdist = "halfuniform")
 locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "ashr", mixcompdist = "halfuniform")
 
+#summary(fit, fit$lambda[cv.lam])
+#summary(fit, fit$lambda[cv1se.lam])
+#cv.fit$cve[cv1se.lam]/cv.fit$cve[cv.lam]
 
 ### Univariate testing
 tstat <- numeric(ncol(X))
@@ -1555,3 +1558,41 @@ grid.table(data.frame(Gene = uni.output$name, uni_fdr = uni.output$fdr,
                        CV_mfdr = locfdr.cv[id,3]))
 dev.off()
 
+
+#############
+### Figure 5
+#############
+
+### Sim Seed
+set.seed(123)
+
+### Setup
+n <- 200
+p <- 600
+bb <- numeric(60)
+bb[(0:5)*10+1] <- c(6,-6,5,-5,4,-4)  #### 6 true variables (type A)
+
+## Ids of var types
+id.A <- which(bb != 0)
+id.B <- 1:t
+id.B <- id.B[-id.A]
+id.C <- (t+1):p
+
+### Simulate correlated data
+D1 <- genData(n, J=6, J0=6, K=10, K0=1, rho=0, rho.g=0.5, beta=bb)  #### 9 correlated vars for each true (type B)
+D2 <- genData(n, p - 60, rho=0.8, beta=0, corr="auto")
+X <- cbind(D1$X, D2$X)
+y <- D1$y
+
+### Fit model
+cv.fit <- cv.ncvreg(X, y, penalty = "lasso")
+fit <- cv.fit$fit
+
+locfdr.cv.ashr  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "ashr")
+locfdr.cv.kernel  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")
+
+ggplot(locfdr.cv.ashr, aes(x = z, y = mfdr)) + geom_point()
+ggplot(locfdr.cv.kernel, aes(x = z, y = mfdr)) + geom_point()
+
+ggplot(locfdr.cv.ashr, aes(x = z)) + geom_density() + 
+  stat_function(fun=dnorm,color="red",args=list(mean=0, sd=1))
