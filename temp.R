@@ -1591,12 +1591,28 @@ fit <- cv.fit$fit
 locfdr.cv.ashr  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "ashr")
 locfdr.cv.kernel  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")
 
-ggplot(locfdr.cv.ashr, aes(x = z, y = mfdr)) + geom_point()
-ggplot(locfdr.cv.kernel, aes(x = z, y = mfdr)) + geom_point()
 
-ggplot(locfdr.cv.ashr, aes(x = z)) + geom_density() + 
-  stat_function(fun=dnorm,color="red",args=list(mean=0, sd=1))
+fun <- approxfun(density(locfdr.cv.kernel$z))
 
-ashr.fit <- ash.workhorse(locfdr.cv.kernel$z, rep(1, nrow(locfdr.cv.kernel)))
-get_density(ashr.fit)
+p1 <- ggplot(locfdr.cv.ashr, aes(x = z)) + geom_histogram(aes(y = ..density..), bins = 50, col = "black", fill = "grey")+ 
+  stat_function(fun=dnorm,args=list(mean=0, sd=1), color = "red", size = 1, linetype = "dashed") + 
+  stat_function(fun=fun,args=list(), color = "blue", size = 1) + geom_rug() + 
+  labs(x = "z-value", y = "Density", title = "Distribution of z-values")
 
+df <- rbind(data.frame(locfdr.cv.kernel, Method = "kernel"),
+            data.frame(locfdr.cv.ashr, Method = "ashr"))
+
+#p2 <- ggplot(locfdr.cv.kernel, aes(x = z, y = mfdr)) + geom_point() + labs(x = "z-value", y = "mfdr Estimate", title = "Kernel")
+#p3 <- ggplot(locfdr.cv.ashr, aes(x = z, y = mfdr)) + geom_point() + labs(x = "z-value", y = "mfdr Estimate", title = "Ashr")
+
+p4 <- ggplot(df, aes(x = z, y = mfdr, col = Method)) + geom_jitter(width = .1, height = .01, alpha = .9)  + labs(x = "z-value", y = "mfdr Estimate", title = "Estimates by Method")
+
+png("figures_tables/Fig5.png", h=7, w=8, units = 'in', res = 300)
+grid.arrange(p1,p4, nrow = 2)
+dev.off()
+
+
+
+#ashr.fit <- ash.workhorse(locfdr.cv.kernel$z, rep(1, nrow(locfdr.cv.kernel)), mixcompdist = "normal")
+
+     
