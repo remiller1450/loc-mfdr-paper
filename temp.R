@@ -1438,10 +1438,10 @@ cv1se.lam <- min(which(cv.fit$cve - cv.fit$cvse <  min(cv.fit$cve)))
 cv.lam <- which(cv.fit$fit$lambda == cv.fit$lambda.min)
 
 ## local mfdr using model/lambdas from above
-locfdr.cv  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")$pen.vars
-locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "kernel")$pen.vars
+locfdr.cv  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "ashr", nullweight = 1, mixcompdist = "halfnormal")$pen.vars
+locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "ashr", nullweight = 1, mixcompdist = "halfnormal")$pen.vars
 
-summary(fit, fit$lambda[cv.lam], method = "kernel")
+#summary(fit, fit$lambda[cv.lam], method = "kernel")
 
 ## Results
 shedden.cv.res <- data.frame(name = row.names(locfdr.cv[order(locfdr.cv$mfdr),])[1:10],
@@ -1467,6 +1467,7 @@ shedden.uni.res <- data.frame(name = colnames(X[,order(univariate.res.ash)[1:10]
                          z = zstat[order(univariate.res.ash)][1:10],
                          fdr = univariate.res.ash[order(univariate.res.ash)][1:10])
 
+mean(abs(cor(X)))
 
 #############
 ### Table 3
@@ -1595,8 +1596,8 @@ locfdr.cv.kernel  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kerne
 fun <- approxfun(density(locfdr.cv.kernel$z))
 
 p1 <- ggplot(locfdr.cv.ashr, aes(x = z)) + geom_histogram(aes(y = ..density..), bins = 50, col = "black", fill = "grey")+ 
-  stat_function(fun=dnorm,args=list(mean=0, sd=1), color = "red", size = 1, linetype = "dashed") + 
-  stat_function(fun=fun,args=list(), color = "blue", size = 1) + geom_rug() + 
+  stat_function(fun=dnorm,args=list(mean=0, sd=1), color = "black", size = 1, linetype = "dashed") + 
+  stat_function(fun=fun,args=list(), color = "black", size = 1) + geom_rug() + 
   labs(x = "z-value", y = "Density", title = "Distribution of z-values")
 
 df <- rbind(data.frame(locfdr.cv.kernel, Method = "kernel"),
@@ -1607,8 +1608,8 @@ df <- rbind(data.frame(locfdr.cv.kernel, Method = "kernel"),
 
 p4 <- ggplot(df, aes(x = z, y = mfdr, col = Method)) + geom_jitter(width = .1, height = .01, alpha = .9)  + labs(x = "z-value", y = "mfdr Estimate", title = "Estimates by Method")
 
-png("figures_tables/Fig5.png", h=7, w=8, units = 'in', res = 300)
-grid.arrange(p1,p4, nrow = 2)
+png("figures_tables/Fig5.png", h=5, w=8, units = 'in', res = 300)
+grid.arrange(p1,p4, nrow = 1)
 dev.off()
 
 
