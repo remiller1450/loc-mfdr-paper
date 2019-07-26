@@ -2,11 +2,12 @@
 #
 #   Filename    :	loc_mfdr_reproduce.R				
 #
-#   Output data files :    fig1.pdf, fig2.pdf, fig3.pdf, fig4.pdf, table1.pdf, 
-#			                     table2.pdf, table3.pdf, table4.pdf 
+#   Output data files :    Fig1.png, Fig2.png, Fig3.png, Fig4.png, Fig5.png
+#			                     table1.pdf, table2.pdf, table3.pdf, table4.pdf 
 #
 #   Required packages (CRAN) :  ggplot2, Matrix, survival, covTest, selectiveInference, devtools,
-#                               Rccp, gridExtra, locfdr, grid, reshape2, hdi, knockoff, ashr
+#                               Rccp, gridExtra, locfdr, grid, reshape2, hdi, knockoff, ashr,
+#                               dplyr, pROC
 #
 #   Required packages (github) : ncvreg
 #
@@ -26,6 +27,8 @@ library(hdi)
 library(knockoff)
 library(ashr)
 library(devtools)
+library(dplyr)
+library(pROC)
 
 ### Install latest version of ncvreg
 #devtools::install_github("pbreheny/ncvreg")
@@ -137,7 +140,7 @@ lseq <- fit$lambda
 locfdr.res <- matrix(NA, nrow = ncol(X), ncol = length(lseq))
 sel.mat <- matrix(NA, nrow = ncol(X), ncol = length(lseq))
 for(i in 1:length(lseq)){
-  temp <- locmfdr.new(fit$fit, lambda = lseq[i], number = ncol(X))
+  temp <- locmfdr.plot1(fit$fit, lambda = lseq[i], number = ncol(X))
   locfdr.res[,i] <- temp$locfdr
   sel.mat[,i] <- (temp$selected == '*')
 }
@@ -236,10 +239,11 @@ id.B <- NA   ## No correlated vars in this scenario
 id.C <- which(beta == 0)
 
 ## Number of simulation replications
-nreps <- 20
+nreps <- 200
 
 ## Setup objects to store results
-res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
+res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- matrix(NA, nrow = p, ncol = nreps)
+res.lassocv.kernel <- res.lassocv1se.kernel <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
 
 for (i in 1:nreps){
   
@@ -280,16 +284,22 @@ for (i in 1:nreps){
   locfdr.lam <- ncvreg::local_mfdr(fit, fit$lambda[mfdr.lam], method = "ashr")$mfdr
   locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "ashr")$mfdr
   
+  locfdr.cv.k  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")$mfdr
+  locfdr.cv1se.k <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "kernel")$mfdr
+  
+  
   ## Store iteration results (local fdrs)
   res.lassomfdr[,i] <- locfdr.lam
   res.lassocv[,i] <- locfdr.cv
   res.lassocv1se[,i] <- locfdr.cv1se
   res.uni[,i] <- univariate.res
   res.uniash[,i] <- univariate.res.ash
+  res.lassocv.kernel[,i] <- locfdr.cv.k
+  res.lassocv1se.kernel[,i] <- locfdr.cv1se.k
 }
 
 ## Save results
-save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, 
+save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, res.lassocv.kernel, res.lassocv1se.kernel,
      id.A, id.B, id.C, file = "simres/cox_easy.RData")
 
 
@@ -315,11 +325,11 @@ id.C <- (t+1):p
 
 
 ## Number of simulation replications
-nreps <- 20
+nreps <- 200
 
 ## Setup objects to store results
-res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
-
+res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- matrix(NA, nrow = p, ncol = nreps)
+res.lassocv.kernel <- res.lassocv1se.kernel <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
 
 for(i in 1:nreps){
   
@@ -361,16 +371,21 @@ for(i in 1:nreps){
   locfdr.lam <- ncvreg::local_mfdr(fit, fit$lambda[mfdr.lam],  method = "ashr")$mfdr
   locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam],  method = "ashr")$mfdr
   
+  locfdr.cv.k  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")$mfdr
+  locfdr.cv1se.k <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "kernel")$mfdr
+  
   ## Store iteration results (local fdrs)
   res.lassomfdr[,i] <- locfdr.lam
   res.lassocv[,i] <- locfdr.cv
   res.lassocv1se[,i] <- locfdr.cv1se
   res.uni[,i] <- univariate.res
   res.uniash[,i] <- univariate.res.ash
+  res.lassocv.kernel[,i] <- locfdr.cv.k
+  res.lassocv1se.kernel[,i] <- locfdr.cv1se.k
 }
 
 ## Save simulation results
-save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, 
+save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, res.lassocv.kernel, res.lassocv1se.kernel,
      id.A, id.B, id.C, file = "simres/cox_hard.RData")
 
 
@@ -386,7 +401,7 @@ set.seed(12345)
 n <- 1000
 p <- 600
 t <- 60
-beta <- c(rep(.15,t/2), rep(-.15,t/2), rep(0,p-t))
+beta <- c(rep(.25,t/2), rep(-.25,t/2), rep(0,p-t))
 
 ### Variable IDs for sim type
 id.A <- which(beta != 0)
@@ -394,10 +409,11 @@ id.B <- NA   ## No correlated vars in this scenario
 id.C <- which(beta == 0)
 
 ## Number of simulation replications
-nreps <- 20
+nreps <- 200
 
 ## Setup objects to store results
-res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
+res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- matrix(NA, nrow = p, ncol = nreps)
+res.lassocv.kernel <- res.lassocv1se.kernel <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
 
 for (i in 1:nreps){
   
@@ -433,16 +449,21 @@ for (i in 1:nreps){
   locfdr.lam <- ncvreg::local_mfdr(fit, fit$lambda[mfdr.lam],  method = "ashr")$mfdr
   locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam],  method = "ashr")$mfdr
   
+  locfdr.cv.k  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")$mfdr
+  locfdr.cv1se.k <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "kernel")$mfdr
+  
   ## Store iteration results (local fdrs)
   res.lassomfdr[,i] <- locfdr.lam
   res.lassocv[,i] <- locfdr.cv
   res.lassocv1se[,i] <- locfdr.cv1se
   res.uni[,i] <- univariate.res
   res.uniash[,i] <- univariate.res.ash
+  res.lassocv.kernel[,i] <- locfdr.cv.k
+  res.lassocv1se.kernel[,i] <- locfdr.cv1se.k
 }
 
 ## Save simulation results
-save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, 
+save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, res.lassocv.kernel, res.lassocv1se.kernel,
      id.A, id.B, id.C, file = "simres/logistic_easy.RData")
 
 
@@ -457,7 +478,7 @@ set.seed(12345)
 n <- 200
 p <- 600
 bb <- numeric(60)
-bb[(0:5)*10+1] <- c(1.1,-1.1,1,-1,.9,-.9)  #### 6 true variables (type A)
+bb[(0:5)*10+1] <- c(1.2,-1.2,1,-1,.8,-.8)  #### 6 true variables (type A)
 
 ## Ids of var types
 id.A <- which(bb != 0)
@@ -467,10 +488,11 @@ id.C <- (t+1):p
 
 
 ## Number of simulation replications
-nreps <- 20
+nreps <- 200
 
 ## Setup objects to store results
-res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
+res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- matrix(NA, nrow = p, ncol = nreps)
+res.lassocv.kernel <- res.lassocv1se.kernel <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
 
 for(i in 1:nreps){
   ## Simulate data
@@ -507,16 +529,21 @@ for(i in 1:nreps){
   locfdr.lam <- ncvreg::local_mfdr(fit, fit$lambda[mfdr.lam], method = "ashr")$mfdr
   locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "ashr")$mfdr
   
+  locfdr.cv.k  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")$mfdr
+  locfdr.cv1se.k <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "kernel")$mfdr
+  
   ## Store iteration results (local fdrs)
   res.lassomfdr[,i] <- locfdr.lam
   res.lassocv[,i] <- locfdr.cv
   res.lassocv1se[,i] <- locfdr.cv1se
   res.uni[,i] <- univariate.res
   res.uniash[,i] <- univariate.res.ash
+  res.lassocv.kernel[,i] <- locfdr.cv.k
+  res.lassocv1se.kernel[,i] <- locfdr.cv1se.k
 }
 
 ## Save simulation results
-save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, 
+save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, res.lassocv.kernel, res.lassocv1se.kernel,
      id.A, id.B, id.C, file = "simres/logistic_hard.RData")
 
 
@@ -541,10 +568,11 @@ id.B <- id.B[-id.A]
 id.C <- (t+1):p
 
 ## Number of simulation replications
-nreps <- 20
+nreps <- 200
 
 ## Setup objects to store results
-res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
+res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- matrix(NA, nrow = p, ncol = nreps)
+res.lassocv.kernel <- res.lassocv1se.kernel <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
 
 for (i in 1:nreps){
   ### Simulate data
@@ -580,16 +608,21 @@ for (i in 1:nreps){
   locfdr.lam <- ncvreg::local_mfdr(fit, fit$lambda[mfdr.lam],  method = "ashr")$mfdr
   locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam],  method = "ashr")$mfdr
   
+  locfdr.cv.k  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")$mfdr
+  locfdr.cv1se.k <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "kernel")$mfdr
+  
   ## Store iteration results (local fdrs)
   res.lassomfdr[,i] <- locfdr.lam
   res.lassocv[,i] <- locfdr.cv
   res.lassocv1se[,i] <- locfdr.cv1se
   res.uni[,i] <- univariate.res
   res.uniash[,i] <- univariate.res.ash
+  res.lassocv.kernel[,i] <- locfdr.cv.k
+  res.lassocv1se.kernel[,i] <- locfdr.cv1se.k
 }
 
 ## Save simulation results
-save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, 
+save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, res.lassocv.kernel, res.lassocv1se.kernel,
      id.A, id.B, id.C, file = "simres/linear_easy.RData")
 
 ####################################################
@@ -615,7 +648,8 @@ id.C <- (t+1):p
 nreps <- 200
 
 ## Setup objects to store results
-res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
+res.lassomfdr <- res.lassocv <- res.lassocv1se <- res.uni <- matrix(NA, nrow = p, ncol = nreps)
+res.lassocv.kernel <- res.lassocv1se.kernel <- res.uniash <- matrix(NA, nrow = p, ncol = nreps)
 
 for (i in 1:nreps){
   ### Simulate correlated data
@@ -653,16 +687,21 @@ for (i in 1:nreps){
   locfdr.lam <- ncvreg::local_mfdr(fit, fit$lambda[mfdr.lam], method = "ashr")$mfdr
   locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "ashr")$mfdr
   
+  locfdr.cv.k  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")$mfdr
+  locfdr.cv1se.k <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "kernel")$mfdr
+  
   ## Store iteration results (local fdrs)
   res.lassomfdr[,i] <- locfdr.lam
   res.lassocv[,i] <- locfdr.cv
   res.lassocv1se[,i] <- locfdr.cv1se
   res.uni[,i] <- univariate.res
   res.uniash[,i] <- univariate.res.ash
+  res.lassocv.kernel[,i] <- locfdr.cv.k
+  res.lassocv1se.kernel[,i] <- locfdr.cv1se.k
 }
 
 ## Save simulation results
-save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, 
+save(res.lassomfdr,res.lassocv, res.lassocv1se, res.uni, res.uniash, res.lassocv.kernel, res.lassocv1se.kernel,
      id.A, id.B, id.C, file = "simres/linear_hard.RData")
 
 
@@ -1050,6 +1089,18 @@ power.res.hard <- data.frame(Val = c(df.cv.n$N, df.cv1se.n$N, df.mfdr.n$N, df.un
                         Var = c("Causal (A)","Correlated (B)","Noise (C)"), Scenario = "Assumptions Violated")
 
 
+### AUC (assumptions Violated)
+cvs <- c(as.vector(res.lassocv[1:60,]), as.vector(res.lassocv[61:600,])) 
+est.cv.v <- cvs[which(df.cv$Type %in% c('A','C'))]
+tr.cv.v <- ifelse(df.cv[which(df.cv$Type %in% c('A','C')),2] == 'C', 1, 0)
+auc.cv.v <- pROC::auc(tr.cv.v, est.cv.v)
+
+us <- c(as.vector(res.uniash[1:60,]), as.vector(res.uniash[61:600,])) 
+est.uni.v <- us[which(df.uniash$Type %in% c('A','C'))]
+tr.uni.v <- ifelse(df.uniash[which(df.uniash$Type %in% c('A','C')),2] == 'C', 1, 0)
+auc.uni.v <- pROC::auc(tr.uni.v, est.uni.v)
+
+
 load("simres/linear_easy.RData")
 ## Ids for A/B vars within first 60 (last 540 are all "C")
 AB.ids <- rep("A", 60)
@@ -1093,15 +1144,45 @@ power.res.easy <- data.frame(Val = c(df.cv.n$N, df.cv1se.n$N, df.mfdr.n$N, df.un
                                         rep("Univariate (locfdr)", 2), rep("Univariate fdr", 2)),
                              Var = c("Causal (A)","Noise (C)"), Scenario = "Assumptions Met")
 
+### AUC (assumptions Met)
+cvs <- c(as.vector(res.lassocv[1:60,]), as.vector(res.lassocv[61:600,])) 
+est.cv.m <- cvs[which(df.cv$Type %in% c('A','C'))]
+tr.cv.m <- ifelse(df.cv[which(df.cv$Type %in% c('A','C')),2] == 'C', 1, 0)
+auc.cv.m <- pROC::auc(tr.cv.m, est.cv.m)
+
+us <- c(as.vector(res.uniash[1:60,]), as.vector(res.uniash[61:600,])) 
+est.uni.m <- us[which(df.uniash$Type %in% c('A','C'))]
+tr.uni.m <- ifelse(df.uniash[which(df.uniash$Type %in% c('A','C')),2] == 'C', 1, 0)
+auc.uni.m <- pROC::auc(tr.uni.m, est.uni.m)
+
+### Power plot (Fig 3)
+
 power.combined <- rbind(power.res.hard, power.res.easy)
 power.combined <- power.combined[which(power.combined$Method %in% c("lasso mfdr (CV)", "lasso mfdr (CV1se)", "Univariate fdr")),]
 
 png("figures_tables/Fig3.png", h=4, w=6, units = 'in', res = 300)
 p <- ggplot(power.combined, aes(x = relevel(Method, ref = "lasso mfdr (CV)"), y = Val, fill = Var)) + ggtitle("") +
   geom_bar(stat = "identity", position=position_stack(reverse=TRUE)) + scale_fill_manual(name = "Feature Type", values = pal(3)[c(2,3,1)]) +
-  coord_flip() + scale_y_continuous(expression(paste("Features with ", widehat(mfdr), " or ", widehat(fdr), " < 0.10"))) + scale_x_discrete("Method")
-p + facet_grid(. ~ Scenario, scales = "free")
+  coord_flip() + scale_y_continuous(expression(paste("Features with ", widehat(mfdr), " or ", widehat(fdr), " < 0.10"))) + scale_x_discrete(" ")
+p + facet_grid(.~ Scenario, scales = "free") + theme(axis.text.y = element_text(angle = 45, hjust = 1))
 dev.off()
+
+## Numbers appearing in the text accompanying Fig 3
+power.combined
+
+### Assumptions Violated
+3.625/3.448 ## 5% more A vars found
+3.760/0.105 ## Univariate declares significance for 35.8 times as many B vars
+0.465/0.070 ## Univariate declares significance for 6.6 times as many C vars
+
+### Assumptions Met
+17.975/11.180  ## 61% more A vars in
+
+### AUC results
+auc.cv.m
+auc.uni.m
+auc.cv.v
+auc.uni.v
 
 ########################################################################################
 #
