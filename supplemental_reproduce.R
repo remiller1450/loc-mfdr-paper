@@ -69,7 +69,7 @@ l.mfdr <- with(df.mfdr, loess(Noise ~ Estimate, span = .05))
 yy.mfdr <- predict(l.mfdr, newdata = xx)
 smooth.mfdr <- data.frame(xx = xx, yy = yy.mfdr)
 
-l.uni <- with(df.uni, loess(Noise ~ Estimate, span = .45))
+l.uni <- with(df.uni, loess(Noise ~ Estimate, span = .6))
 yy.uni <- predict(l.uni, newdata = xx)
 smooth.uni <- data.frame(xx = xx, yy = yy.uni)
 
@@ -145,7 +145,7 @@ l.mfdr <- with(df.mfdr, loess(Noise ~ Estimate, span = .2))
 yy.mfdr <- predict(l.mfdr, newdata = xx)
 smooth.mfdr <- data.frame(xx = xx, yy = yy.mfdr)
 
-l.uni <- with(df.uni, loess(Noise ~ Estimate, span = .45))
+l.uni <- with(df.uni, loess(Noise ~ Estimate, span = .65))
 yy.uni <- predict(l.uni, newdata = xx)
 smooth.uni <- data.frame(xx = xx, yy = yy.uni)
 
@@ -188,7 +188,7 @@ p.uniash2 <- p.uniash2 + geom_path(data = smooth.uniash, aes(x = xx, y = yy), lw
 ### Supplemental figure 1 as a pdf
 png("supplemental_figures_tables/Supp1.png", h=6, w=8.5, units = 'in', res = 300)
 grid.arrange(arrangeGrob(p.cv, top="lasso mfdr (CV)"), arrangeGrob(p.cv1se, top="lasso mfdr (CV)"),  
-             arrangeGrob(p.cv1se, top="Univariate fdr", right = "Assumptions Violated"),
+             arrangeGrob(p.uniash, top="Univariate fdr", right = "Assumptions Violated"),
              arrangeGrob(p.cv2), arrangeGrob(p.cv1se2),  
              arrangeGrob(p.uniash2, right = "Assumptions Met"), ncol=3)
 dev.off()
@@ -313,7 +313,7 @@ l.mfdr <- with(df.mfdr, loess(Noise ~ Estimate, span = .2))
 yy.mfdr <- predict(l.mfdr, newdata = xx)
 smooth.mfdr <- data.frame(xx = xx, yy = yy.mfdr)
 
-l.uni <- with(df.uni, loess(Noise ~ Estimate, span = .45))
+l.uni <- with(df.uni, loess(Noise ~ Estimate, span = .55))
 yy.uni <- predict(l.uni, newdata = xx)
 smooth.uni <- data.frame(xx = xx, yy = yy.uni)
 
@@ -356,7 +356,7 @@ p.uniash2 <- p.uniash2 + geom_path(data = smooth.uniash, aes(x = xx, y = yy), lw
 ### Supplemental figure 2 
 png("supplemental_figures_tables/Supp2.png", h=6, w=8.5, units = 'in', res = 300)
 grid.arrange(arrangeGrob(p.cv, top="lasso mfdr (CV)"), arrangeGrob(p.cv1se, top="lasso mfdr (CV)"),  
-             arrangeGrob(p.cv1se, top="Univariate fdr", right = "Assumptions Violated"),
+             arrangeGrob(p.uniash, top="Univariate fdr", right = "Assumptions Violated"),
              arrangeGrob(p.cv2), arrangeGrob(p.cv1se2),  
              arrangeGrob(p.uniash2, right = "Assumptions Met"), ncol=3)
 dev.off()
