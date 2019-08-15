@@ -874,7 +874,7 @@ p.uniash2 <- p.uniash2 + geom_path(data = smooth.uniash, aes(x = xx, y = yy), lw
 ### Generate and save Figure2 as a pdf
 png("figures_tables/Fig2.png", h=6, w=8.5, units = 'in', res = 300)
 
-grid.arrange(arrangeGrob(p.cv, top="lasso mfdr (CV)"), arrangeGrob(p.cv1se, top="lasso mfdr (CV)"),  
+grid.arrange(arrangeGrob(p.cv, top="lasso mfdr (CV)"), arrangeGrob(p.cv1se, top="lasso mfdr (1SE)"),  
              arrangeGrob(p.uniash, top="Univariate fdr", right = "Assumptions Violated"),
              arrangeGrob(p.cv2), arrangeGrob(p.cv1se2),  
              arrangeGrob(p.uniash2, right = "Assumptions Met"), ncol=3)
@@ -1084,7 +1084,7 @@ df.uniash <-  data.frame(Estimate = (c(as.vector(res.uniash[1:60,]), as.vector(r
 df.uniash.n <- group_by(df.uni, Type) %>% summarise(N = sum(Estimate)/ncol(res.uniash))
 
 power.res.hard <- data.frame(Val = c(df.cv.n$N, df.cv1se.n$N, df.mfdr.n$N, df.uni.n$N, df.uniash.n$N),
-                        Method = c(rep("lasso mfdr (CV)", 3), rep("lasso mfdr (CV1se)", 3), rep("Lasso (mFDR)", 3),
+                        Method = c(rep("lasso mfdr (CV)", 3), rep("lasso mfdr (1SE)", 3), rep("Lasso (mFDR)", 3),
                                    rep("Univariate (locfdr)", 3), rep("Univariate fdr", 3)),
                         Var = c("Causal (A)","Correlated (B)","Noise (C)"), Scenario = "Assumptions Violated")
 
@@ -1140,7 +1140,7 @@ df.uniash <-  data.frame(Estimate = (c(as.vector(res.uniash[1:60,]), as.vector(r
 df.uniash.n <- group_by(df.uni, Type) %>% summarise(N = sum(Estimate)/ncol(res.uniash))
 
 power.res.easy <- data.frame(Val = c(df.cv.n$N, df.cv1se.n$N, df.mfdr.n$N, df.uni.n$N, df.uniash.n$N),
-                             Method = c(rep("lasso mfdr (CV)", 2), rep("lasso mfdr (CV1se)", 2), rep("Lasso (mFDR)", 2),
+                             Method = c(rep("lasso mfdr (CV)", 2), rep("lasso mfdr (1SE)", 2), rep("Lasso (mFDR)", 2),
                                         rep("Univariate (locfdr)", 2), rep("Univariate fdr", 2)),
                              Var = c("Causal (A)","Noise (C)"), Scenario = "Assumptions Met")
 
@@ -1158,7 +1158,7 @@ auc.uni.m <- pROC::auc(tr.uni.m, est.uni.m)
 ### Power plot (Fig 3)
 
 power.combined <- rbind(power.res.hard, power.res.easy)
-power.combined <- power.combined[which(power.combined$Method %in% c("lasso mfdr (CV)", "lasso mfdr (CV1se)", "Univariate fdr")),]
+power.combined <- power.combined[which(power.combined$Method %in% c("lasso mfdr (CV)", "lasso mfdr (1SE)", "Univariate fdr")),]
 
 png("figures_tables/Fig3.png", h=4, w=6, units = 'in', res = 300)
 p <- ggplot(power.combined, aes(x = relevel(Method, ref = "lasso mfdr (CV)"), y = Val, fill = Var)) + ggtitle("") +
@@ -1548,7 +1548,7 @@ shedden.uni.res <- data.frame(name = colnames(X[,order(univariate.res.ash)[1:10]
                          z = zstat[order(univariate.res.ash)][1:10],
                          fdr = univariate.res.ash[order(univariate.res.ash)][1:10])
 
-mean(abs(cor(X)))
+#mean(abs(cor(X)))
 
 #############
 ### Table 3
@@ -1577,12 +1577,27 @@ dev.off()
 ### Figure 4
 #############
 
+set.seed(12345)
+dfd <- data.frame(z = c(locfdr.cv$z, locfdr.cv1se$z, zstat, rnorm(length(zstat))),
+                  ID = c(rep("mfdr (CV)", length(locfdr.cv$z)),
+                         rep("mfdr (1SE)", length(locfdr.cv1se$z)), 
+                         rep("Univariate fdr", length(zstat)),
+                         rep("Theoretical N(0,1)", length(zstat))),
+                  lty = c(rep("1", length(locfdr.cv$z)),
+                          rep("1", length(locfdr.cv1se$z)), 
+                          rep("1", length(zstat)),
+                          rep("2", length(zstat))))
+
+dfd$ID <- relevel(dfd$ID, ref = "Theoretical N(0,1)")
+myColors <- c("black", 'red', 'blue','green')
+names(myColors) <- levels(dfd$ID)
+colScale <- scale_colour_manual(name = "",values = myColors)
+
+pd <- ggplot(data = dfd, aes(x = z, color = ID, lty = lty)) + geom_line(stat = "density", lwd = 1.1) + 
+  labs(y = "Density", colour = "") + scale_linetype(guide = FALSE) + scale_x_continuous(breaks = c(-5:5)) + colScale
+
 png("figures_tables/Fig4.png", h=4.5, w=6, units = 'in', res = 300)
-plot(density(locfdr.cv$z), lwd = 2, col = 2, xlab = "z", main = "Density Comparisons")
-lines(seq(-5,5,by = .01), dnorm(seq(-5,5,by = .01)), col = 1, lwd = 2, lty = 2)
-lines(density(locfdr.cv1se$z), lwd = 2, col = 3)
-lines(density(zstat), lwd = 2, col = 4)
-legend("topright", legend = c("lasso (CV)", "lasso (CV-1se)", "Univariate", "Theoretical Null"), col = c(2,3,4,1), lty = c(1,1,1,2), lwd = 2, bty = "n")
+pd
 dev.off()
 
 
@@ -1646,11 +1661,13 @@ dev.off()
 #############
 
 ### Sim Seed
-set.seed(123)
+set.seed(145)
+#set.seed(138)
 
 ### Setup
 n <- 200
 p <- 600
+t <- 60
 bb <- numeric(60)
 bb[(0:5)*10+1] <- c(6,-6,5,-5,4,-4)  #### 6 true variables (type A)
 
@@ -1670,8 +1687,8 @@ y <- D1$y
 cv.fit <- cv.ncvreg(X, y, penalty = "lasso")
 fit <- cv.fit$fit
 
-locfdr.cv.ashr  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "ashr")
-locfdr.cv.kernel  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")
+locfdr.cv.ashr  <- ncvreg::local_mfdr(fit, cv.fit$lambda.min, method = "ashr")
+locfdr.cv.kernel  <- ncvreg::local_mfdr(fit, cv.fit$lambda.min, method = "kernel")
 
 
 fun <- approxfun(density(locfdr.cv.kernel$z))
@@ -1679,15 +1696,16 @@ fun <- approxfun(density(locfdr.cv.kernel$z))
 p1 <- ggplot(locfdr.cv.ashr, aes(x = z)) + geom_histogram(aes(y = ..density..), bins = 50, col = "black", fill = "grey")+ 
   stat_function(fun=dnorm,args=list(mean=0, sd=1), color = "black", size = 1, linetype = "dashed") + 
   stat_function(fun=fun,args=list(), color = "black", size = 1) + geom_rug() + 
-  labs(x = "z-value", y = "Density", title = "Distribution of z-values")
+  labs(x = "z-value", y = "Density", title = " ")
 
-df <- rbind(data.frame(locfdr.cv.kernel, Method = "kernel"),
+df <- rbind(data.frame(locfdr.cv.kernel, Method = "density"),
             data.frame(locfdr.cv.ashr, Method = "ashr"))
 
 #p2 <- ggplot(locfdr.cv.kernel, aes(x = z, y = mfdr)) + geom_point() + labs(x = "z-value", y = "mfdr Estimate", title = "Kernel")
 #p3 <- ggplot(locfdr.cv.ashr, aes(x = z, y = mfdr)) + geom_point() + labs(x = "z-value", y = "mfdr Estimate", title = "Ashr")
 
-p4 <- ggplot(df, aes(x = z, y = mfdr, col = Method)) + geom_jitter(width = .1, height = .01, alpha = .9)  + labs(x = "z-value", y = "mfdr Estimate", title = "Estimates by Method")
+p4 <- ggplot() + geom_jitter(data = df, aes(x = z, y = mfdr, col = Method), width = .1, height = .01, alpha = .9)  + 
+  geom_rug(data = df, aes(x = z)) + labs(x = "z-value", y = expression(widehat(mfdr)), title = " ") + theme(legend.position="top")
 
 png("figures_tables/Fig5.png", h=5, w=8, units = 'in', res = 300)
 grid.arrange(p1,p4, nrow = 1)
