@@ -1519,10 +1519,15 @@ cv1se.lam <- min(which(cv.fit$cve - cv.fit$cvse <  min(cv.fit$cve)))
 cv.lam <- which(cv.fit$fit$lambda == cv.fit$lambda.min)
 
 ## local mfdr using model/lambdas from above
-locfdr.cv  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "ashr", nullweight = 1, mixcompdist = "halfnormal")$pen.vars
-locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "ashr", nullweight = 1, mixcompdist = "halfnormal")$pen.vars
+#locfdr.cv  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "ashr", nullweight = 1, mixcompdist = "halfnormal")$pen.vars
+#locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "ashr", nullweight = 1, mixcompdist = "halfnormal")$pen.vars
 
-#summary(fit, fit$lambda[cv.lam], method = "kernel")
+locfdr.cv  <- ncvreg::local_mfdr(fit, fit$lambda[cv.lam], method = "kernel")$pen.vars
+locfdr.cv1se <- ncvreg::local_mfdr(fit, fit$lambda[cv1se.lam], method = "kernel")$pen.vars
+
+
+sum(locfdr.cv$Selected == "*")  # 43 selections at lambda CV
+sum(locfdr.cv1se$Selected == "*")  # 1 selections at lambda CV1se
 
 ## Results
 shedden.cv.res <- data.frame(name = row.names(locfdr.cv[order(locfdr.cv$mfdr),])[1:10],
@@ -1594,7 +1599,8 @@ names(myColors) <- levels(dfd$ID)
 colScale <- scale_colour_manual(name = "",values = myColors)
 
 pd <- ggplot(data = dfd, aes(x = z, color = ID, lty = lty)) + geom_line(stat = "density", lwd = 1.1) + 
-  labs(y = "Density", colour = "") + scale_linetype(guide = FALSE) + scale_x_continuous(breaks = c(-5:5)) + colScale
+  labs(y = "Density", colour = "") + scale_linetype(guide = FALSE) + scale_x_continuous(breaks = c(-5:5),
+                                                                                        limits = c(-5.5,5.5)) + colScale
 
 png("figures_tables/Fig4.png", h=4.5, w=6, units = 'in', res = 300)
 pd
@@ -1631,7 +1637,7 @@ for (j in 1:ncol(X)){
   fit.lm <- lm(y ~ X[,j])
   tstat[j] <- summary(fit.lm)$coefficients[2,3]
 }
-zstat <- qnorm(pt(tstat,n - 2))
+zstat <- qnorm(pt(tstat,length(y)- 2))
 zstat[is.infinite(zstat)] <- tstat[is.infinite(zstat)] ## Make infinite z-stats into their pre-transformed t-stat
 
 #univariate.res <- locfdr(zstat, nulltype = 0, plot = 0)$fdr
