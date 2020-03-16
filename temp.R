@@ -1607,7 +1607,7 @@ pd
 dev.off()
 
 
-### Case study #2 (table 4)
+### Case study #2 - BRCA1 (table 4)
 
 ## Load TCGA BRCA1 dataset
 TCGA <- readRDS("case_study_data//bcTCGA.rds")
@@ -1648,6 +1648,14 @@ uni.output <- data.frame(name = colnames(X[,order(univariate.res)[1:10]]),
                          z = zstat[order(univariate.res)][1:10],
                          fdr = univariate.res[order(univariate.res)][1:10])
 
+### Knock-off Filter
+set.seed(12345)
+kn.res <- knockoff.filter(X, y)
+
+### Selective Inference
+fit.lar <- lar(X,y, maxsteps = 90)
+sig.est <- estimateSigma(X, y)
+si.res <- larInf(fit.lar, sigma = sig.est$sigmahat, k = 85)
 
 #############
 ### Table 4
