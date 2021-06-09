@@ -1,16 +1,21 @@
 library(hdi)
+library(devtools)
 library(ncvreg)
 library(ashr)
 library(Matrix)
 
 ## Sources functions used in the simulations and the construction of figures
-source("C:\\Users\\millerry\\Documents\\loc-mfdr-paper\\functions.R")
+#source("C:\\Users\\millerry\\Documents\\loc-mfdr-paper\\functions.R")
+source("C:\\Users\\Ryan M\\Documents\\Grinnell\\loc-mfdr-paper\\functions.R")
+
+
 
 ### Setup parameters
 n <- 200
 t <- 60
 bb <- numeric(t)
 bb[(0:5)*10+1] <- c(6,-6,5,-5,4,-4)  #### 6 true variables (type A)
+
 
 ## Ids of var types
 id.A <- which(bb != 0)
@@ -25,7 +30,7 @@ rhos <- c(0,.3,.6,.9)
 cors <-  c("auto", "exch")
 
 
-ps <- c(100,200,400,800,1600)
+ps <- c(100,200,400)
 
 
 for(q in 1:length(ps)) {
@@ -60,7 +65,7 @@ mfdr_res[i, ,j,k] <- mfdr
       
 }}}
 save(proj_res, mfdr_res, p, n, t, bb, id.A, id.B, id.C, rhos, cors,
-     file = paste0("H:\\sim1p",p,".RData"))
+     file = paste0("C:\\Users\\Ryan M\\Documents\\Grinnell\\sim1p",p,".RData"))
 }
 
 

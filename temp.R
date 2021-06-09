@@ -2,7 +2,7 @@
 #
 #   Filename    :	loc_mfdr_reproduce.R				
 #
-#   Output data files :    Fig1.png, Fig2.png, Fig3.png, Fig4.png, Fig5.png
+#   Output data files :    Fig1.png, Fig2.png, Fig3.png, Fig4.png, Fig5.png, Fig_proj.png
 #			                     table1.pdf, table2.pdf, table3.pdf, table4.pdf 
 #
 #   Required packages (CRAN) :  ggplot2, Matrix, survival, covTest, selectiveInference, devtools,
@@ -1725,8 +1725,57 @@ png("figures_tables/Fig5.png", h=5, w=8, units = 'in', res = 300)
 grid.arrange(p1,p4, nrow = 1)
 dev.off()
 
+####################
+###
+### Create Fig_proj
+### 
+####################
 
 
-#ashr.fit <- ash.workhorse(locfdr.cv.kernel$z, rep(1, nrow(locfdr.cv.kernel)), mixcompdist = "normal")
+### Setup "Violated" scenario parameters
+n <- 200
+t <- 60
+bb <- numeric(t)
+bb[(0:5)*10+1] <- c(6,-6,5,-5,4,-4)  #### 6 true variables (type A)
 
-     
+
+## Ids of var types
+id.A <- which(bb != 0)
+id.B <- 1:t
+id.B <- id.B[-id.A]
+
+## Store mfdr's and proj_fdr's for each across 100 iterations
+
+nreps <- 100
+rhos <- c(0,.4,.8)
+cors <-  c("auto", "exch")
+p <- 600
+id.C <- (t+1):p
+
+proj_res <- array(NA, dim = c(nreps, p, length(rhos), length(cors)))
+mfdr_res <- array(NA, dim = c(nreps, p, length(rhos), length(cors)))
+
+
+for(k in 1:length(cors)){
+  for(j in 1:length(rhos)){
+    for(i in 1:nreps){
+      ### Generate data using funs sourced
+      D1 <- genData(n, J=6, J0=6, K=10, K0=1, rho=0, rho.g=0.5, beta=bb)  #### 9 correlated vars for each true (type B)
+      D2 <- genData(n, p - 60, rho= rhos[j], beta=0, corr = cors[k])
+      X <- cbind(D1$X, D2$X)
+      X <- ncvreg::std(X)
+      y <- D1$y
+      
+      lpj <- lasso.proj(x = X, y = y,standardize = FALSE, return.Z = TRUE)
+      zpj <- lpj$bhat/lpj$se
+      pfdr <- get_lfdr(ash(as.vector(zpj),rep(1, length(zpj))))
+      
+      fit <- cv.ncvreg(X, y)
+      res <- local_mfdr(fit$fit, lambda = fit$lambda.min)
+      mfdr <- get_lfdr(ash(betahat = res$z, se = rep(1, length(res$z))))
+      
+      ## dim1 = rep, dim2 = p, dim3 = rho, dim4 = corr
+      proj_res[i, ,j,k] <- pfdr
+      mfdr_res[i, ,j,k] <- mfdr
+      
+    }}}
