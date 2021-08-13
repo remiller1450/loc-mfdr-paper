@@ -112,14 +112,14 @@ p1 <- ggplot() +
   geom_vline(xintercept=fit$lambda.min, linetype = "dotted") + 
   scale_x_reverse(limits=c((max(lseq)+.25),0)) +
   geom_point(data = fdr.points, mapping = aes(x = -lambda, y = value, col = factor(col)), shape = 2, size = 1.5) +
-  scale_color_manual(name = "Feature Type", values = cids[c(1,3,2)], labels = c("Causal", "Correlated", "Noise")) +
+  scale_color_manual(name = "Feature Type", values = cids[c(1,3,2)], labels = c("Noise", "Correlated", "Causal")) +
   labs(x = expression(lambda), y = expression(widehat(mfdr))) + theme(legend.position="bottom") + ggtitle("")
 
 ## Lower left panel plot 
 long.coef <- melt(fit$fit$beta[-1,])
 coef.path <- data.frame(long.coef, col = cols)
 p2 <- ggplot() + geom_line(data = coef.path, aes(x = Var2, y = value, group = Var1, col = factor(col)), size = 1) + scale_x_reverse() +
-  scale_color_manual(name = "Feature Type", values = cids[c(1,3,2)], labels = c("Causal", "Correlated", "Noise")) +
+  scale_color_manual(name = "Feature Type", values = cids[c(1,3,2)], labels = c("Noise", "Correlated", "Causal")) +
   geom_vline(xintercept=fit$lambda.min, linetype = "dotted") + 
   labs(x = expression(lambda), y = "Coefficient Estimate") + ggtitle("")
 
@@ -180,14 +180,14 @@ p3 <- ggplot() +
   geom_vline(xintercept=fit$lambda.min, linetype = "dotted") + 
   scale_x_reverse(limits=c((max(lseq)+.25),0)) +
   geom_point(data = fdr.points, mapping = aes(x = -lambda, y = value, col = factor(col)), shape = 2, size = 1.5) +
-  scale_color_manual(name = "Feature Type", values = cids[c(1,3,2)], labels = c("Causal", "Correlated", "Noise")) +
+  scale_color_manual(name = "Feature Type", values = cids[c(1,3,2)], labels = c("Noise", "Correlated", "Causal")) +
   labs(x = expression(lambda), y = expression(widehat(mfdr))) + theme(legend.position="bottom") + ggtitle("mfdr Path")
 
 ## Upper Left plot
 long.coef <- melt(fit$fit$beta[-1,])
 coef.path <- data.frame(long.coef, col = cols)
 p4 <- ggplot() + geom_line(data = coef.path, aes(x = Var2, y = value, group = Var1, col = factor(col)), size = 1) + scale_x_reverse() +
-  scale_color_manual(name = "Feature Type", values = cids[c(1,3,2)], labels = c("Causal", "Correlated", "Noise")) +
+  scale_color_manual(name = "Feature Type", values = cids[c(1,3,2)], labels = c("Noise", "Correlated", "Causal")) +
   geom_vline(xintercept=fit$lambda.min, linetype = "dotted") + 
   labs(x = expression(lambda), y = "Coefficient Estimate") + ggtitle("Coefficient Path")
 
@@ -1747,7 +1747,7 @@ id.B <- id.B[-id.A]
 ## Store mfdr's and proj_fdr's for each across 100 iterations
 
 nreps <- 100
-rhos <- c(0,.4,.8)
+rhos <- c(0.8,0.4,0)
 cors <-  c("auto", "exch")
 p <- 600
 id.C <- (t+1):p
@@ -1755,6 +1755,7 @@ id.C <- (t+1):p
 proj_res <- array(NA, dim = c(nreps, p, length(rhos), length(cors)))
 mfdr_res <- array(NA, dim = c(nreps, p, length(rhos), length(cors)))
 
+set.seed(123)
 
 for(k in 1:length(cors)){
   for(j in 1:length(rhos)){
@@ -1766,16 +1767,189 @@ for(k in 1:length(cors)){
       X <- ncvreg::std(X)
       y <- D1$y
       
-      lpj <- lasso.proj(x = X, y = y,standardize = FALSE, return.Z = TRUE)
-      zpj <- lpj$bhat/lpj$se
-      pfdr <- get_lfdr(ash(as.vector(zpj),rep(1, length(zpj))))
-      
+      ## mfdr
       fit <- cv.ncvreg(X, y)
       res <- local_mfdr(fit$fit, lambda = fit$lambda.min)
       mfdr <- get_lfdr(ash(betahat = res$z, se = rep(1, length(res$z))))
       
+      ## lasso proj
+      lpj <- lasso.proj(x = X, y = y,
+                        standardize = FALSE, return.Z = TRUE)
+      zpj <- lpj$bhat/lpj$se
+      pfdr <- get_lfdr(ash(as.vector(zpj),rep(1, length(zpj))))
+
       ## dim1 = rep, dim2 = p, dim3 = rho, dim4 = corr
       proj_res[i, ,j,k] <- pfdr
       mfdr_res[i, ,j,k] <- mfdr
       
-    }}}
+    }
+  res =  list(proj_res, mfdr_res)
+  save(res, file = "projsim.RData")
+  }
+}
+
+
+#load("projsim.RData")
+meth_id <- 1
+rho_id <- 1
+cor_id <- 1
+dfp1 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                   mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                   mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+           type = rep(c("A", "B", "C"), 1),
+           rho  = rep(rhos[rho_id], 3),
+           correlation = rep(cors[cor_id],3),
+           method = rep("projection", 3))
+
+rho_id <- 2
+cor_id <- 1
+dfp2 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                          mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                          mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+                  type = rep(c("A", "B", "C"), 1),
+                  rho  = rep(rhos[rho_id], 3),
+                  correlation = rep(cors[cor_id],3),
+                  method = rep("projection", 3))
+
+rho_id <- 3
+cor_id <- 1
+dfp3 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+                   type = rep(c("A", "B", "C"), 1),
+                   rho  = rep(rhos[rho_id], 3),
+                   correlation = rep(cors[cor_id],3),
+                   method = rep("projection", 3))
+
+rho_id <- 1
+cor_id <- 2
+dfp4 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+                   type = rep(c("A", "B", "C"), 1),
+                   rho  = rep(rhos[rho_id], 3),
+                   correlation = rep(cors[cor_id],3),
+                   method = rep("projection", 3))
+
+rho_id <- 2
+cor_id <- 2
+dfp5 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+                   type = rep(c("A", "B", "C"), 1),
+                   rho  = rep(rhos[rho_id], 3),
+                   correlation = rep(cors[cor_id],3),
+                   method = rep("projection", 3))
+
+rho_id <- 3
+cor_id <- 2
+dfp6 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+                   type = rep(c("A", "B", "C"), 1),
+                   rho  = rep(rhos[rho_id], 3),
+                   correlation = rep(cors[cor_id],3),
+                   method = rep("projection", 3))
+
+dfpf <- rbind(dfp1, dfp2, dfp3, dfp4, dfp5, dfp6)
+
+#load("projsim.RData")
+meth_id <- 2
+rho_id <- 1
+cor_id <- 1
+dfm1 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+                   type = rep(c("A", "B", "C"), 1),
+                   rho  = rep(rhos[rho_id], 3),
+                   correlation = rep(cors[cor_id],3),
+                   method = rep("mfdr", 3))
+
+rho_id <- 2
+cor_id <- 1
+dfm2 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+                   type = rep(c("A", "B", "C"), 1),
+                   rho  = rep(rhos[rho_id], 3),
+                   correlation = rep(cors[cor_id],3),
+                   method = rep("mfdr", 3))
+
+rho_id <- 3
+cor_id <- 1
+dfm3 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+                   type = rep(c("A", "B", "C"), 1),
+                   rho  = rep(rhos[rho_id], 3),
+                   correlation = rep(cors[cor_id],3),
+                   method = rep("mfdr", 3))
+
+rho_id <- 1
+cor_id <- 2
+dfm4 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+                   type = rep(c("A", "B", "C"), 1),
+                   rho  = rep(rhos[rho_id], 3),
+                   correlation = rep(cors[cor_id],3),
+                   method = rep("mfdr", 3))
+
+rho_id <- 2
+cor_id <- 2
+dfm5 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+                   type = rep(c("A", "B", "C"), 1),
+                   rho  = rep(rhos[rho_id], 3),
+                   correlation = rep(cors[cor_id],3),
+                   method = rep("mfdr", 3))
+
+rho_id <- 3
+cor_id <- 2
+dfm6 <- data.frame(sel = c(mean(rowSums(res[[meth_id]][,id.A,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.B,rho_id,cor_id] < 0.1)),
+                           mean(rowSums(res[[meth_id]][,id.C,rho_id,cor_id] < 0.1))),
+                   type = rep(c("A", "B", "C"), 1),
+                   rho  = rep(rhos[rho_id], 3),
+                   correlation = rep(cors[cor_id],3),
+                   method = rep("mfdr", 3))
+
+dfmf <- rbind(dfm1, dfm2, dfm3, dfm4, dfm5, dfm6)
+dff <- rbind(dfpf, dfmf)
+
+cids <- pal(3)
+dff$correlation[which(dff$correlation == "auto")] <- "Autoregressive"
+dff$correlation[which(dff$correlation == "exch")] <- "Exchangeable"
+
+## Textual info
+
+## 1.6% rate of noise selections (projection)
+sum(res[[1]][,id.C,,] < 0.1)/
+   sum(res[[1]][,,,] < 0.1)
+
+## 4.3% rate of noise selections (mfdr)
+sum(res[[2]][,id.C,,] < 0.1)/
+  sum(res[[2]][,,,] < 0.1)
+
+
+###################
+### Create Fig_proj
+###################
+
+load("C:\\Users\\millerr33\\Documents\\GitHub\\loc-mfdr-paper\\projsim.RData")
+
+# ps <- ggplot(data = dff, aes(x = rho, y = sel, linetype = method, col = type)) +
+#   scale_color_manual(name = "Feature Type", values = cids[c(2,3,1)], labels = c("Causal", "Correlated", "Noise")) +
+#   geom_line() + geom_point() + facet_grid(~correlation) +
+#   labs(y = "Selections", linetype = "Method", x = expression(rho))
+
+ps <- ggplot(data = subset(dff, correlation == "Autoregressive"), aes(x = rho, y = sel, col = type)) +
+  scale_color_manual(name = "Feature Type", values = cids[c(2,3,1)], labels = c("Causal", "Correlated", "Noise")) +
+  geom_line() + geom_point() + facet_grid(~method) +
+  labs(y = "Selections", linetype = "Method", x = expression(rho))
+
+
+png("figures_tables/Fig_proj.png", h=3.5, w=7, units = 'in', res = 300)
+ps
+dev.off()
