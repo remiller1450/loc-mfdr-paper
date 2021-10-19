@@ -61,7 +61,7 @@ X <- cbind(D1$X, .6*D2$X)
 y <- D1$y
 
 ## Fit cross-validated model
-fit <- cv.ncvreg(X,y, penalty = "lasso", returnX = TRUE)
+fit <- cv.ncvreg(X,y, penalty = "lasso", returnX = TRUE, seed = 123)
 lseq <- fit$lambda
 
 ## Find loc mfdrs for all lambda values
@@ -133,7 +133,7 @@ D1 <- genData(n, J=2, J0=2, K=2, K0=1, rho=0, rho.g=0.8, beta=bb)  #### 9 correl
 D2 <- genData(n, p - 4, rho=0, beta=0, corr="auto")
 X <- cbind(D1$X, .585*D2$X)
 y <- D1$y
-fit <- cv.ncvreg(X,y, penalty = "lasso", returnX = TRUE)
+fit <- cv.ncvreg(X,y, penalty = "lasso", returnX = TRUE, seed = 12)
 lseq <- fit$lambda
 
 ## Local mfdr for each lambda
@@ -1788,7 +1788,7 @@ for(k in 1:length(cors)){
   }
 }
 
-
+### You can load the saved sim res here instead of running the above loop
 #load("projsim.RData")
 meth_id <- 1
 rho_id <- 1
@@ -1937,18 +1937,25 @@ sum(res[[2]][,id.C,,] < 0.1)/
 ### Create Fig_proj
 ###################
 
-load("C:\\Users\\millerr33\\Documents\\GitHub\\loc-mfdr-paper\\projsim.RData")
+#load("C:\\Users\\millerr33\\Documents\\GitHub\\loc-mfdr-paper\\projsim.RData")
+cids <- pal(2)
 
+## Older plot versions
 # ps <- ggplot(data = dff, aes(x = rho, y = sel, linetype = method, col = type)) +
 #   scale_color_manual(name = "Feature Type", values = cids[c(2,3,1)], labels = c("Causal", "Correlated", "Noise")) +
 #   geom_line() + geom_point() + facet_grid(~correlation) +
 #   labs(y = "Selections", linetype = "Method", x = expression(rho))
+# 
+# ps <- ggplot(data = subset(dff, correlation == "Autoregressive"), aes(x = rho, y = sel, col = type)) +
+#   scale_color_manual(name = "Feature Type", values = cids[c(2,3,1)], labels = c("Causal", "Correlated", "Noise")) +
+#   geom_line() + geom_point() + facet_grid(~method) +
+#   labs(y = "Selections", linetype = "Method", x = expression(rho))
 
-ps <- ggplot(data = subset(dff, correlation == "Autoregressive"), aes(x = rho, y = sel, col = type)) +
-  scale_color_manual(name = "Feature Type", values = cids[c(2,3,1)], labels = c("Causal", "Correlated", "Noise")) +
-  geom_line() + geom_point() + facet_grid(~method) +
+
+ps <- ggplot(data = subset(dff, correlation == "Autoregressive"), aes(x = rho, y = sel, col = method)) +
+  scale_color_manual(name = "Method", values = cids[c(1,2)], labels = c("mfdr", "projection")) +
+  geom_line() + geom_point() + facet_grid(~type) +
   labs(y = "Selections", linetype = "Method", x = expression(rho))
-
 
 png("figures_tables/Fig_proj.png", h=3.5, w=7, units = 'in', res = 300)
 ps
