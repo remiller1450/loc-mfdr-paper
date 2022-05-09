@@ -1494,12 +1494,10 @@ dev.off()
 
 ########################################################################################
 #
-#        Code used to produce case study results (Table 3, Figure 4, Table 4)
+#        Code used to produce case study results (primary analysis)
 #
 ########################################################################################
 
-
-### Case study #1 (table 3, figure 4)
 
 ## Load Shedden dataset
 load("case_study_data/Shedden2008.RData")
